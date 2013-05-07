@@ -30,11 +30,6 @@
  * For generic usage, you can try the ANDS_Response_XML defined in xml_creater.php.
  */
 
-// Report all errors except E_NOTICE
-// This is the default value set in php.ini
-// If anything else, try them.
-// error_reporting (E_ALL ^ E_NOTICE);
-
 /**
  * An array for collecting erros which can be reported later. It will be checked before a new action is taken.
  */
