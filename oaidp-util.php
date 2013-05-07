@@ -241,12 +241,6 @@ function selectallQuery($metadPrefix = "rif", $id = ''){
     return $query;
 }
 
-/** this function will return metadataFormat of a record */
-function idFormatQuery($id) {
-    global $SQL;
-    return 'select '.$SQL['metadataPrefix'].' FROM '.$SQL['table']. " WHERE ".$SQL['identifier']." = '".$id."'";
-}
-
 /** this function will return identifier and datestamp for all records
  * not very useful
  */

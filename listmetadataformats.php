@@ -3,8 +3,9 @@
  * \file
  * \brief Response to Verb ListMetadataFormats
  *
- * The information of supported metadata formats is saved in database and retrieved by calling function <B>idFormatQuery</B>.
- * \sa idFormatQuery
+ * The information of supported metadata formats :
+ * try database table $SQL['table']
+ * else try $METADATAFORMATS array from config-metadataformats.php
  */
 
 /**
@@ -26,7 +27,7 @@ function addMetedataFormat(&$outputObj,$key,$val) {
 
 if (isset($args['identifier'])) {
     $identifier = $args['identifier'];
-    $query = idFormatQuery($identifier);
+    $query = 'select '.$SQL['metadataPrefix'].' FROM '.$SQL['table']. " WHERE ".$SQL['identifier']." = '".$id."'";
     $res = $db->query($query);
     if ($res==false) {
         if (SHOW_QUERY_ERROR) {
@@ -47,7 +48,9 @@ if (isset($args['identifier'])) {
 }
 
 //break and clean up on error
-if (!empty($errors)) oai_exit();
+if (!empty($errors)) {
+    oai_exit();
+}
 
 $outputObj = new ANDS_Response_XML($args);
 if (isset($mf)) {
