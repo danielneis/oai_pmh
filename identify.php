@@ -10,23 +10,24 @@
 
 // The response to Identify is fixed
 if (SHOW_QUERY_ERROR) {
-	echo "Here are some settings in raw format:\n";
-  print_r($identifyResponse);
-	echo 'MAXRECORDS ',MAXRECORDS, ', MAXIDS ', MAXIDS,"\n";
-  echo 'Token is valid for ',TOKEN_VALID," seconds\n";
-  echo 'Tokens have prefix: ',TOKEN_PREFIX,"\n";
-  echo 'XMLSCHEMA: ',XMLSCHEMA,"\n";
-  echo "\n";
+    echo "Here are some settings in raw format:\n";
+    print_r($identifyResponse);
+    echo 'MAXRECORDS ',MAXRECORDS, ', MAXIDS ', MAXIDS,"\n";
+    echo 'Token is valid for ',TOKEN_VALID," seconds\n";
+    echo 'Tokens have prefix: ',TOKEN_PREFIX,"\n";
+    echo 'XMLSCHEMA: ',XMLSCHEMA,"\n";
+    echo "\n";
 }
+
 $outputObj = new ANDS_Response_XML($args);
 foreach($identifyResponse as $key => $val) {
-	$outputObj->add2_verbNode($key, $val);
+    $outputObj->add2_verbNode($key, $val);
 }
 
 if(isset($compression)) {
-	foreach($compression as $val) {
-		$outputObj->add2_verbNode("compression", $val);
-	}
+    foreach($compression as $val) {
+        $outputObj->add2_verbNode("compression", $val);
+    }
 }
 
 // A description MAY be included.
@@ -132,4 +133,3 @@ if(strlen($output)>10) {
 	$des->appendXML($output);
 	$outputObj->verbNode->appendChild($des);
 }
-?>

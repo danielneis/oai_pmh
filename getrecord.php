@@ -16,11 +16,10 @@ $metadataPrefix = $args['metadataPrefix'];
 // myhandler is a php file which will be included to generate metadata node.
 // $inc_record  = $METADATAFORMATS[$metadataPrefix]['myhandler'];
 
-if (is_array($METADATAFORMATS[$metadataPrefix]) 
-	&& isset($METADATAFORMATS[$metadataPrefix]['myhandler'])) {
-	$inc_record  = $METADATAFORMATS[$metadataPrefix]['myhandler'];
+if (is_array($METADATAFORMATS[$metadataPrefix]) && isset($METADATAFORMATS[$metadataPrefix]['myhandler'])) {
+    $inc_record  = $METADATAFORMATS[$metadataPrefix]['myhandler'];
 } else {
-	$errors[] = oai_error('cannotDisseminateFormat', 'metadataPrefix', $metadataPrefix);
+    $errors[] = oai_error('cannotDisseminateFormat', 'metadataPrefix', $metadataPrefix);
 }
 
 $identifier = $args['identifier'];
@@ -31,50 +30,44 @@ debug_message("Query: $query") ;
 $res = $db->query($query);
 
 if ($res===false) {
-	if (SHOW_QUERY_ERROR) {
-		echo __FILE__.','.__LINE__."<br />";
-		echo "Query: $query<br />\n";
-		die($db->errorInfo());
-	} else {
-		$errors[] = oai_error('idDoesNotExist', '', $identifier); 
-	}
+    if (SHOW_QUERY_ERROR) {
+        echo __FILE__.','.__LINE__."<br />";
+        echo "Query: $query<br />\n";
+        die($db->errorInfo());
+    } else {
+        $errors[] = oai_error('idDoesNotExist', '', $identifier); 
+    }
 } elseif (!$res->rowCount()) { // based on PHP manual, it might only work for some DBs
-	$errors[] = oai_error('idDoesNotExist', '', $identifier); 
+    $errors[] = oai_error('idDoesNotExist', '', $identifier); 
 }
 
- 
 if (!empty($errors)) {
-	oai_exit();
+    oai_exit();
 }
 
 $record = $res->fetch(PDO::FETCH_ASSOC);
 if ($record===false) {
-	if (SHOW_QUERY_ERROR) {
-		echo __FILE__.','.__LINE__."<br />";
-		echo "Query: $query<br />\n";
-	}
-	$errors[] = oai_error('idDoesNotExist', '', $identifier);	
+    if (SHOW_QUERY_ERROR) {
+        echo __FILE__.','.__LINE__."<br />";
+        echo "Query: $query<br />\n";
+    }
+    $errors[] = oai_error('idDoesNotExist', '', $identifier);	
 }
 
 $identifier = $record[$SQL['identifier']];;
 
 $datestamp = formatDatestamp($record[$SQL['datestamp']]); 
 
-if (isset($record[$SQL['deleted']]) && ($record[$SQL['deleted']] == 'true') && 
-	($deletedRecord == 'transient' || $deletedRecord == 'persistent')) {
-	$status_deleted = TRUE;
-} else {
-	$status_deleted = FALSE;
-}
+$status_deleted = (isset($record[$SQL['deleted']]) && ($record[$SQL['deleted']] == 'true') && 
+                   ($deletedRecord == 'transient' || $deletedRecord == 'persistent'));
 
 $outputObj = new ANDS_Response_XML($args);
 $cur_record = $outputObj->create_record();
 $cur_header = $outputObj->create_header($identifier, $datestamp,$record[$SQL['set']],$cur_record);
 // return the metadata record itself
 if (!$status_deleted) {
-	include($inc_record); // where the metadata node is generated.
-	create_metadata($outputObj, $cur_record, $identifier, $record[$SQL['set']], $db);
+    include($inc_record); // where the metadata node is generated.
+    create_metadata($outputObj, $cur_record, $identifier, $record[$SQL['set']], $db);
 }	else {
-	$cur_header->setAttribute("status","deleted");
+    $cur_header->setAttribute("status","deleted");
 }  
-?>

@@ -119,12 +119,12 @@ $deletedRecord = $identifyResponse["deletedRecord"]; // a shorthand for checking
 //granularity is days
 //$granularity          = 'YYYY-MM-DD';
 // granularity is seconds
-$identifyResponse["granularity"] = 'YYYY-MM-DD';
+$identifyResponse["granularity"] = 'YYYY-MM-DDThh:mm:ssZ';
 
 // this is appended if your granularity is seconds.
 // do not change
 if (strcmp($identifyResponse["granularity"],'YYYY-MM-DDThh:mm:ssZ')==0) {
-    $identifyResponse["earliestDatestamp"] = $identifyResponse["earliestDatestamp"].'T00:00:00Z';
+ //   $identifyResponse["earliestDatestamp"] = $identifyResponse["earliestDatestamp"].'T00:00:00Z';
 }
 
 /** Compression methods supported. Optional (multiple). Default: null.

@@ -60,29 +60,29 @@ function oai_error($code, $argument = '', $value = '')
 {
 	switch ($code) {
 		case 'badArgument' :
-			$text = "The argument '$argument' (value='$value') included in the request is not valid.";
+			$text = "Attribute '{$argument}' is not allowed to appear in element 'request'";
 			break;
 
 		case 'badGranularity' :
-			$text = "The value '$value' of the argument '$argument' is not valid.";
+			$text = "The value '{$value}' of the argument '{$argument}' is not valid.";
 			$code = 'badArgument';
 			break;
 
 		case 'badResumptionToken' :
-			$text = "The resumptionToken '$value' does not exist or has already expired.";
+			$text = "The resumptionToken '{$value}' does not exist or has already expired.";
 			break;
 
 		case 'badRequestMethod' :
-			$text = "The request method '$argument' is unknown.";
+			$text = "The request method '{$argument}' is unknown.";
 			$code = 'badVerb';
 			break;
 
 		case 'badVerb' :
-			$text = "The verb '$argument' provided in the request is illegal.";
+			$text = "The verb '{$argument}' provided in the request is illegal.";
 			break;
 
 		case 'cannotDisseminateFormat' :
-			$text = "The metadata format '$value' given by $argument is not supported by this repository.";
+			$text = "The metadata format '{$value}' given by {$argument} is not supported by this repository.";
 			break;
 
 		case 'exclusiveArgument' :
@@ -91,7 +91,7 @@ function oai_error($code, $argument = '', $value = '')
 			break;
 
 		case 'idDoesNotExist' :
-			$text = "The value '$value' of the identifier does not exist in this repository.";
+			$text = "The value '{$value}' of the identifier does not exist in this repository.";
 			if (!is_valid_uri($value)) {
 				$code = 'badArgument';
 				$text .= ' Invalidated URI has been detected.';
@@ -99,7 +99,7 @@ function oai_error($code, $argument = '', $value = '')
 			break;
 
 		case 'missingArgument' :
-			$text = "The required argument '$argument' is missing in the request.";
+			$text = "The required argument '{$argument}' is missing in the request.";
 			$code = 'badArgument';
 			break;
 
@@ -136,7 +136,7 @@ function oai_error($code, $argument = '', $value = '')
 			break;
 
 		default:
-			$text = "Unknown error: code: '$code', argument: '$argument', value: '$value'";
+			$text = "Unknown error: code: '{$code}', argument: '{$argument}', value: '{$value}'";
 			$code = 'badArgument';
 	}
 	return $code."|".$text;

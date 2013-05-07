@@ -152,7 +152,9 @@ if (isset($args['verb'])) {
     $errors[] = oai_error('noVerb');
 }
 
-if (!empty($errors)) {	oai_exit(); }
+if (!empty($errors)) {
+    oai_exit();
+}
 
 if ($compress) {
     ob_start('ob_gzhandler');
@@ -160,7 +162,7 @@ if ($compress) {
 
 header(CONTENT_TYPE);
 
-if(isset($outputObj)) {
+if (isset($outputObj)) {
     $outputObj->display();
 } else {
     exit("There is a bug in codes");
@@ -169,5 +171,3 @@ if(isset($outputObj)) {
 if ($compress) {
     ob_end_flush();
 }
-
-?>
