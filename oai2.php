@@ -68,6 +68,8 @@ foreach($attribs as $val) {
 
 require_once('oaidp-config.php');
 require_once('config-metadataformats.php');
+require_once('config-sets.php');
+require_once('config-database.php');
 
 // Create a PDO object
 try {

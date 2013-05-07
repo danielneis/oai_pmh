@@ -4,6 +4,7 @@
  * \brief Response to Verb ListSets
  *
  * Lists what sets are available to records in the system.
+ * This variable is filled in config-sets.php
  */
 
 // Here the size of sets is small, no resumptionToken is taken care.
