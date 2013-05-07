@@ -29,7 +29,7 @@
  * In common cases, you have to implement your own code to act fully and correctly.
  * For generic usage, you can try the ANDS_Response_XML defined in xml_creater.php.
  */
- 
+
 // Report all errors except E_NOTICE
 // This is the default value set in php.ini
 // If anything else, try them.
@@ -46,31 +46,31 @@ $errors = array();
 $attribs = array ('from', 'identifier', 'metadataPrefix', 'set', 'resumptionToken', 'until');
 
 if (in_array($_SERVER['REQUEST_METHOD'],array('GET','POST'))) {
-		$args = $_REQUEST;
+    $args = $_REQUEST;
 } else {
-	$errors[] = oai_error('badRequestMethod', $_SERVER['REQUEST_METHOD']);
+    $errors[] = oai_error('badRequestMethod', $_SERVER['REQUEST_METHOD']);
 }
 
 require_once('oaidp-util.php');
 // Always using htmlentities() function to encodes the HTML entities submitted by others.
 // No one can be trusted.
 foreach ($args as $key => $val) {
-	$checking = htmlspecialchars(stripslashes($val));
-	if (!is_valid_attrb($checking)) {
-		$errors[] = oai_error('badArgument', $checking);
-	} else {$args[$key] = $checking; }
+    $checking = htmlspecialchars(stripslashes($val));
+    if (!is_valid_attrb($checking)) {
+        $errors[] = oai_error('badArgument', $checking);
+    } else {$args[$key] = $checking; }
 }
 if (!empty($errors)) {	oai_exit(); }
 
 foreach($attribs as $val) {
-	unset($$val);
+    unset($$val);
 }
 
 require_once('oaidp-config.php');
 
 // Create a PDO object
 try {
-		$db = new PDO($DSN);
+    $db = new PDO($DSN);
 } catch (PDOException $e) {
     exit('Connection failed: ' . $e->getMessage());
 }
@@ -83,91 +83,91 @@ require_once('ands_tpa.php');
 // Default, there is no compression supported
 $compress = FALSE;
 if (isset($compression) && is_array($compression)) {
-	if (in_array('gzip', $compression) && ini_get('output_buffering')) {
-		$compress = TRUE;
-	}
+    if (in_array('gzip', $compression) && ini_get('output_buffering')) {
+        $compress = TRUE;
+    }
 }
 
 if (SHOW_QUERY_ERROR) {
-	echo "Args:\n"; print_r($args);
+    echo "Args:\n"; print_r($args);
 }
 
 if (isset($args['verb'])) {
-	switch ($args['verb']) {
+    switch ($args['verb']) {
 
-		case 'Identify':
-			// we never use compression in Identify
-			$compress = FALSE;
-			if(count($args)>1) {
-				foreach($args as $key => $val) {
-					if(strcmp($key,"verb")!=0) {
-						$errors[] = oai_error('badArgument', $key, $val);
-					}	
-				}
-			}
-			if (empty($errors)) include 'identify.php';
-			break;
+        case 'Identify':
+            // we never use compression in Identify
+            $compress = FALSE;
+            if(count($args)>1) {
+                foreach($args as $key => $val) {
+                    if(strcmp($key,"verb")!=0) {
+                        $errors[] = oai_error('badArgument', $key, $val);
+                    }	
+                }
+            }
+            if (empty($errors)) include 'identify.php';
+            break;
 
-		case 'ListMetadataFormats':
-			$checkList = array("ops"=>array("identifier"));
-			checkArgs($args, $checkList);
-			if (empty($errors)) include 'listmetadataformats.php';
-			break;
+        case 'ListMetadataFormats':
+            $checkList = array("ops"=>array("identifier"));
+            checkArgs($args, $checkList);
+            if (empty($errors)) include 'listmetadataformats.php';
+            break;
 
-		case 'ListSets':
-			if(isset($args['resumptionToken']) && count($args) > 2) {
-					$errors[] = oai_error('exclusiveArgument');
-			}
-			$checkList = array("ops"=>array("resumptionToken"));
-			checkArgs($args, $checkList);
-			if (empty($errors)) include 'listsets.php';
-			break;
+        case 'ListSets':
+            if(isset($args['resumptionToken']) && count($args) > 2) {
+                $errors[] = oai_error('exclusiveArgument');
+            }
+            $checkList = array("ops"=>array("resumptionToken"));
+            checkArgs($args, $checkList);
+            if (empty($errors)) include 'listsets.php';
+            break;
 
-		case 'GetRecord':
-			$checkList = array("required"=>array("metadataPrefix","identifier"));
-			checkArgs($args, $checkList);
-			if (empty($errors)) include 'getrecord.php';
-			break;
+        case 'GetRecord':
+            $checkList = array("required"=>array("metadataPrefix","identifier"));
+            checkArgs($args, $checkList);
+            if (empty($errors)) include 'getrecord.php';
+            break;
 
-		case 'ListIdentifiers':
-		case 'ListRecords':
-			if(isset($args['resumptionToken'])) {
-				if (count($args) > 2) {
-					$errors[] = oai_error('exclusiveArgument');
-				}
-				$checkList = array("ops"=>array("resumptionToken"));
-			} else {
-				$checkList = array("required"=>array("metadataPrefix"),"ops"=>array("from","until","set"));
-			}
-			checkArgs($args, $checkList);
-			if (empty($errors)) include 'listrecords.php';
-			break;
+        case 'ListIdentifiers':
+        case 'ListRecords':
+            if(isset($args['resumptionToken'])) {
+                if (count($args) > 2) {
+                    $errors[] = oai_error('exclusiveArgument');
+                }
+                $checkList = array("ops"=>array("resumptionToken"));
+            } else {
+                $checkList = array("required"=>array("metadataPrefix"),"ops"=>array("from","until","set"));
+            }
+            checkArgs($args, $checkList);
+            if (empty($errors)) include 'listrecords.php';
+            break;
 
-		default:
-			// we never use compression with errors
-			$compress = FALSE;
-			$errors[] = oai_error('badVerb', $args['verb']);
-	} /*switch */
+        default:
+            // we never use compression with errors
+            $compress = FALSE;
+            $errors[] = oai_error('badVerb', $args['verb']);
+    } /*switch */
 } else {
-	$errors[] = oai_error('noVerb');
+    $errors[] = oai_error('noVerb');
 }
 
 if (!empty($errors)) {	oai_exit(); }
 
 if ($compress) {
-	ob_start('ob_gzhandler');
+    ob_start('ob_gzhandler');
 }
 
 header(CONTENT_TYPE);
 
 if(isset($outputObj)) {
-	$outputObj->display();
+    $outputObj->display();
 } else {
-	exit("There is a bug in codes");
+    exit("There is a bug in codes");
 }
 
-	if ($compress) {
-		ob_end_flush();
-	}
+if ($compress) {
+    ob_end_flush();
+}
 
 ?>
