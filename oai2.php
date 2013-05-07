@@ -70,7 +70,7 @@ require_once('oaidp-config.php');
 
 // Create a PDO object
 try {
-    $db = new PDO($DSN);
+    $db = new PDO($DSN, $DB_USER, $DB_PASSWD);
 } catch (PDOException $e) {
     exit('Connection failed: ' . $e->getMessage());
 }

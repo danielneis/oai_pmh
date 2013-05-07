@@ -10,35 +10,35 @@
  *
  * The response may may be compressed for better performace:
  * - Compression : a compression encoding supported by the repository. The recommended values are those defined for the Content-Encoding header in Section 14.11 of RFC 2616 describing HTTP 1.1. A compression element should not be included for the identity encoding, which is implied.
-*
+ *
  *
  * Some other used variables:
  *
  * - <B>$adminEmail</B>: the e-mail addresses of administrators of the repository.
  *
- * - <b>$repositoryIdentifier</b> : For a data provider there is only one. For repositories to comply with the oai 
+ * - <b>$repositoryIdentifier</b> : For a data provider there is only one. For repositories to comply with the oai
  * format it has to be unique identifiers for items records.  Basically using domainname will be fine.
  * See: http://www.openarchives.org/OAI/2.0/guidelines-oai-identifier.htm.
  *
  * - <b>$SETS</b>: An array with key words . List of supported SETs.
  *
  * - <b>$METADATAFORMATS</b>: List of supported metadata formats. It is a two-dimensional array with keys.
- * Each supported format is one element of this array at the first dimension. 
- * The key is the name of a metadata format.  
+ * Each supported format is one element of this array at the first dimension.
+ * The key is the name of a metadata format.
  * The exact number of items within each format associated array depends on the nature of a metadata format.
  * Most definitions are done here but handlers themselves are defined in separated files because only the names of PHP script are listed here.
- * 		- metadataPrefix
- * 		- schema
- * 		- metadataNamespace
- * 		- myhandler
- * 		- other optional items: record_prefix, record_namespace and etc. 
+ *         - metadataPrefix
+ *         - schema
+ *         - metadataNamespace
+ *         - myhandler
+ *         - other optional items: record_prefix, record_namespace and etc.
  *
  * - <b>$SQL</b>: Settings for database and queries from database
  *
  * - <b>$DSN</b>: DSN for connecting your database. Reference PDO for details.
  *
  * The rest of settings will not normally need to be adjusted. Read source code for details.
-*/
+ */
 
 /**
  * Whether to show error message for dubug.
@@ -51,9 +51,9 @@
 // If everything is running ok, you should use this
 define('SHOW_QUERY_ERROR',FALSE);
 
-/** 
+/**
  * \property CONTENT_TYPE
- * The content-type the WWW-server delivers back. For debug-puposes, "text/plain" 
+ * The content-type the WWW-server delivers back. For debug-puposes, "text/plain"
  * is easier to view. On a production site you should use "text/xml".
  */
 #define('CONTENT_TYPE','Content-Type: text/plain');
@@ -75,91 +75,89 @@ $identifyResponse = array();
 
 // MUST (only one)
 // please adjust
-$identifyResponse["repositoryName"] = 'Your organisation';
+$identifyResponse["repositoryName"] = 'Moodle Dev2';
 
 // For ANDS to harvest of RIF-CS, originatingSource is plantaccelerator.org.au
 // $dataSource = "plantaccelerator.org.au";
-define('DATASOURCE','domain.of.your.organisation');
+define('DATASOURCE','dev2.moodle.ufsc.br');
 
 // do not change
 define('MY_URI','http://'.$_SERVER['SERVER_NAME'].$_SERVER['SCRIPT_NAME']);
 // You can use a static URI as well.
-// $baseURL 			= "http://my.server.org/oai/oai2.php";
+// $baseURL             = "http://my.server.org/oai/oai2.php";
 $identifyResponse["baseURL"] = MY_URI;
 
 // do not change
 $identifyResponse["protocolVersion"] = '2.0';
 
+// must exist before earliestDatestamp
+$identifyResponse['adminEmail'] = 'danielneis@gmail.com';
+
 // MUST (only one)
 // the earliest datestamp in your repository,
 // please adjust
 // Only date is needed even later it will be formatted according to the granularity.
-$identifyResponse["earliestDatestamp"] = '2011-01-01';
+$identifyResponse["earliestDatestamp"] = '2013-01-01T12:00:00Z';
 
 // How your repository handles deletions
-// no: 			The repository does not maintain status about deletions.
-//				It MUST NOT reveal a deleted status.
-// persistent:	The repository persistently keeps track about deletions 
-//				with no time limit. It MUST consistently reveal the status
-//				of a deleted record over time.
-// transient:   The repository does not guarantee that a list of deletions is 
-//				maintained. It MAY reveal a deleted status for records.
-// 
+// no:             The repository does not maintain status about deletions.
+//                It MUST NOT reveal a deleted status.
+// persistent:    The repository persistently keeps track about deletions
+//                with no time limit. It MUST consistently reveal the status
+//                of a deleted record over time.
+// transient:   The repository does not guarantee that a list of deletions is
+//                maintained. It MAY reveal a deleted status for records.
+//
 // If your database keeps track of deleted records change accordingly.
 // Currently if $record['deleted'] is set to 'true', $status_deleted is set.
-// Some lines in listidentifiers.php, listrecords.php, getrecords.php  
+// Some lines in listidentifiers.php, listrecords.php, getrecords.php
 // must be changed to fit the condition for your database.
-$identifyResponse["deletedRecord"] = 'no'; 
+$identifyResponse["deletedRecord"] = 'no';
 $deletedRecord = $identifyResponse["deletedRecord"]; // a shorthand for checking the configuration of Deleted Records
 
 // MAY (only one)
 //granularity is days
 //$granularity          = 'YYYY-MM-DD';
 // granularity is seconds
-$identifyResponse["granularity"] = 'YYYY-MM-DDThh:mm:ssZ';
+$identifyResponse["granularity"] = 'YYYY-MM-DD';
 
 // this is appended if your granularity is seconds.
 // do not change
 if (strcmp($identifyResponse["granularity"],'YYYY-MM-DDThh:mm:ssZ')==0) {
-	$identifyResponse["earliestDatestamp"] = $identifyResponse["earliestDatestamp"].'T00:00:00Z';
+    $identifyResponse["earliestDatestamp"] = $identifyResponse["earliestDatestamp"].'T00:00:00Z';
 }
 
-// MUST (multiple)
-// please adjust
-$adminEmail			= array('some.one@contact.com'); 
-
 /** Compression methods supported. Optional (multiple). Default: null.
-* 
-* Currently only gzip is supported (you need output buffering turned on, 
-* and php compiled with libgz). 
-* The client MUST send "Accept-Encoding: gzip" to actually receive 
-*/
-// $compression		= array('gzip');
+ *
+ * Currently only gzip is supported (you need output buffering turned on,
+ * and php compiled with libgz).
+ * The client MUST send "Accept-Encoding: gzip" to actually receive
+ */
+// $compression        = array('gzip');
 $compression = null;
 
 // MUST (only one)
-// You may choose any name, but for repositories to comply with the oai 
-// format it has to be unique identifiers for items records. 
+// You may choose any name, but for repositories to comply with the oai
+// format it has to be unique identifiers for items records.
 // see: http://www.openarchives.org/OAI/2.0/guidelines-oai-identifier.htm
 // Basically use domainname
 // please adjust
-$repositoryIdentifier = 'url.organisation.'; 
+$repositoryIdentifier = 'dev2.moodle.ufsc.br.';
 
 // For RIF-CS, especially with ANDS, each registryObject much has a group for the ownership of data.
 // For detail please see ANDS guide on its web site. Each data provider should have only one REG_OBJ_GROUP
 // for this purpose.
 define('REG_OBJ_GROUP','Something agreed on');
 
-// If Identifier needs to show NODE description. It is defined in identify.php 
+// If Identifier needs to show NODE description. It is defined in identify.php
 // You may include details about your community and friends (other
 // data-providers).
-// Please check identify.php for other possible containers 
+// Please check identify.php for other possible containers
 // in the Identify response
 $show_identifier = false;
 // MUST (only one)
 // should not be changed. Only useful when NODE description is included in the response to Identifier
-$delimiter	= ':';
-
+$delimiter    = ':';
 
 /** Maximum mumber of the records to deliver
  * (verb is ListRecords)
@@ -177,63 +175,65 @@ define('MAXIDS',40);
 
 /** After 24 hours resumptionTokens become invalid. Unit is second. */
 define('TOKEN_VALID',24*3600);
-$expirationdatetime = gmstrftime('%Y-%m-%dT%TZ', time()+TOKEN_VALID); 
+$expirationdatetime = gmstrftime('%Y-%m-%dT%TZ', time()+TOKEN_VALID);
 /** Where token is saved and path is included */
 define('TOKEN_PREFIX','/tmp/ANDS_DBPD-');
 
 // define all supported sets in your repository
-$SETS = 	array (
-				array('setSpec'=>'class:activity', 'setName'=>'Activities'),
-				array('setSpec'=>'class:collection', 'setName'=>'Collections'),
-				array('setSpec'=>'class:party', 'setName'=>'Parties')/*,
-				array('setSpec'=>'phdthesis', 'setName'=>'PHD Thesis', 'setDescription'=>'<oai_dc:dc 
-          xmlns:oai_dc="http://www.openarchives.org/OAI/2.0/oai_dc/" 
-          xmlns:dc="http://purl.org/dc/elements/1.1/" 
-          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
-          xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/oai_dc/ 
-          http://www.openarchives.org/OAI/2.0/oai_dc.xsd">
-          <dc:description>This set contains metadata describing electronic music recordings made during the 1950ies</dc:description>
-       </oai_dc:dc>') //,
-				// array('setSpec'=>'math', 'setName'=>'Mathematics') ,
-				// array('setSpec'=>'phys', 'setName'=>'Physics') 
-			*/);
+$SETS = array (
+        array('setSpec'=>'class:activity', 'setName'=>'Activities'),
+        array('setSpec'=>'class:collection', 'setName'=>'Collections'),
+        array('setSpec'=>'class:party', 'setName'=>'Parties')
+        /*,
+        array('setSpec'=>'phdthesis', 'setName'=>'PHD Thesis', 'setDescription'=>'<oai_dc:dc
+        xmlns:oai_dc="http://www.openarchives.org/OAI/2.0/oai_dc/"
+        xmlns:dc="http://purl.org/dc/elements/1.1/"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/oai_dc/
+        http://www.openarchives.org/OAI/2.0/oai_dc.xsd">
+        <dc:description>This set contains metadata describing electronic music recordings made during the 1950ies</dc:description>
+        </oai_dc:dc>') //,
+        // array('setSpec'=>'math', 'setName'=>'Mathematics') ,
+        // array('setSpec'=>'phys', 'setName'=>'Physics')
+        */
+);
 
 // define all supported metadata formats, has to be an array
 //
-// myhandler is the name of the file that handles the request for the 
+// myhandler is the name of the file that handles the request for the
 // specific metadata format.
 // [record_prefix] describes an optional prefix for the metadata
 // [record_namespace] describe the namespace for this prefix
 
-$METADATAFORMATS = 	array (
-						'rif' => array('metadataPrefix'=>'rif', 
-							'schema'=>'http://services.ands.org.au/sandbox/orca/schemata/registryObjects.xsd',
-							'metadataNamespace'=>'http://ands.org.au/standards/rif-cs/registryObjects/',
-							'myhandler'=>'record_rif.php'
-						),
-						'oai_dc' => array('metadataPrefix'=>'oai_dc', 
-							'schema'=>'http://www.openarchives.org/OAI/2.0/oai_dc.xsd',
-							'metadataNamespace'=>'http://www.openarchives.org/OAI/2.0/oai_dc/',
-							'myhandler'=>'record_dc.php',
-							'record_prefix'=>'dc',
-							'record_namespace' => 'http://purl.org/dc/elements/1.1/'
-						)
-					);
+$METADATAFORMATS =     array (
+        'rif' => array('metadataPrefix'=>'rif',
+            'schema'=>'http://services.ands.org.au/sandbox/orca/schemata/registryObjects.xsd',
+            'metadataNamespace'=>'http://ands.org.au/standards/rif-cs/registryObjects/',
+            'myhandler'=>'record_rif.php'
+            ),
+        'oai_dc' => array('metadataPrefix'=>'oai_dc',
+            'schema'=>'http://www.openarchives.org/OAI/2.0/oai_dc.xsd',
+            'metadataNamespace'=>'http://www.openarchives.org/OAI/2.0/oai_dc/',
+            'myhandler'=>'record_dc.php',
+            'record_prefix'=>'dc',
+            'record_namespace' => 'http://purl.org/dc/elements/1.1/'
+            )
+        );
 
 if (!is_array($METADATAFORMATS)) { exit("Configuration of METADATAFORMAT has been wrongly set. Correct your ".__FILE__);}
 
 // The shorthand of xml schema namespace, no need to change this
 define('XMLSCHEMA', 'http://www.w3.org/2001/XMLSchema-instance');
 
-// 
+//
 // DATABASE SETUP
 //
 
 // change according to your local DB setup.
-$DB_HOST   = '127.0.0.1';
-$DB_USER   = 'your-name';
-$DB_PASSWD = 'your-pwd';
-$DB_NAME   = 'your-db';												           
+$DB_HOST   = '';
+$DB_USER   = '';
+$DB_PASSWD = '';
+$DB_NAME   = '';
 
 // Data Source Name: This is the universal connection string
 // if you use something other than mysql edit accordingly.
@@ -242,20 +242,20 @@ $DB_NAME   = 'your-db';
 // Example for Oracle
 // $DSN = "oci8://$DB_USER:$DB_PASSWD@$DB_NAME";
 
-$DSN = "pgsql:host=$DB_HOST;port=5432;dbname=$DB_NAME;user=$DB_USER;password=$DB_PASSWD";
+$DSN = "mysql:host={$DB_HOST};dbname={$DB_NAME};port=3306;";
 
 // the charset you store your metadata in your database
 // currently only utf-8 and iso8859-1 are supported
 $charset = "iso8859-1";
 
-// if entities such as < > ' " in your metadata has already been escaped 
+// if entities such as < > ' " in your metadata has already been escaped
 // then set this to true (e.g. you store < as &lt; in your DB)
 $xmlescaped = false;
 
-// We store multiple entries for one element in a single row 
+// We store multiple entries for one element in a single row
 // in the database. SQL['split'] lists the delimiter for these entries.
 // If you do not do this, do not define $SQL['split']
-// $SQL['split'] = ';'; 
+// $SQL['split'] = ';';
 
 // the name of the table where your store your metadata's header
 $SQL['table'] = 'oai_headers';
@@ -276,8 +276,8 @@ $idPrefix = '';
 // oai:$repositoryIdentifier:$idPrefix$SQL['identifier']
 // should not be changed
 //
-// Commented out 24/11/10 14:19:09 
-// $oaiprefix = "oai".$delimiter.$repositoryIdentifier.$delimiter.$idPrefix; 
+// Commented out 24/11/10 14:19:09
+// $oaiprefix = "oai".$delimiter.$repositoryIdentifier.$delimiter.$idPrefix;
 $oaiprefix = "";
 
 // adjust anIdentifier with sample contents an identifier
@@ -295,4 +295,3 @@ $SQL['deleted'] = 'deleted';
 // the setnames are stored for each item
 // the name of the column where you store sets
 $SQL['set'] = 'oai_set';
-?>

@@ -23,10 +23,6 @@ foreach($identifyResponse as $key => $val) {
 	$outputObj->add2_verbNode($key, $val);
 }
 
-foreach($adminEmail as $val) {
-	$outputObj->add2_verbNode("adminEmail", $val);
-}
-
 if(isset($compression)) {
 	foreach($compression as $val) {
 		$outputObj->add2_verbNode("compression", $val);
