@@ -20,9 +20,7 @@
 
 // Create a metadata object and a registryObjects, and its only child registryObject
 function create_metadata($outputObj, $cur_record, $identifier, $setspec, $db) {
-    // debug_message('In '.__FILE__.' function '.__FUNCTION__.' was called.');
 
-    // debug_var_dump('metadata_node',$metadata_node);
     $metadata_node = $outputObj->create_metadata($cur_record);
     $obj_node = new ANDS_TPA($outputObj, $metadata_node, $db);
     try {

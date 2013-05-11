@@ -1,7 +1,6 @@
 <?php
 /**
- * \file
- * \brief Response to Verb Identify
+ * Response to Verb Identify
  *
  * Tell the world what the data provider is. Usually it is static once the provider has been set up.
  *
@@ -129,7 +128,7 @@ if (false) {
 }
 
 if(strlen($output)>10) {
-	$des = $outputObj->doc->createDocumentFragment();
-	$des->appendXML($output);
-	$outputObj->verbNode->appendChild($des);
+    $des = $outputObj->doc->createDocumentFragment();
+    $des->appendXML($output);
+    $outputObj->verbNode->appendChild($des);
 }

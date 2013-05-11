@@ -54,7 +54,7 @@ $identifyResponse = array();
 
 // MUST (only one)
 // please adjust
-$identifyResponse["repositoryName"] = 'Moodle Dev2';
+$identifyResponse["repositoryName"] = 'Moodle Neis';
 
 // For ANDS to harvest of RIF-CS, originatingSource is plantaccelerator.org.au
 // $dataSource = "plantaccelerator.org.au";

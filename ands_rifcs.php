@@ -3,7 +3,6 @@
  * \file
  * \brief classes related to generating RIF-CS XML response file for ANDS.
  *
- *
  * Generate RIF-CS set records of Activity, Collection, Party.
  * - They are closely bounded to ANDS requirements, need to know the database for getting information.
  */

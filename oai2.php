@@ -1,7 +1,5 @@
 <?php
 /**
- * \file oai2.php
- * \brief
  * OAI Data Provider command processor
  *
  * OAI Data Provider is not designed for human to retrieve data.
@@ -55,7 +53,9 @@ foreach ($args as $key => $val) {
         $errors[] = oai_error('badArgument', $checking);
     } else {$args[$key] = $checking; }
 }
-if (!empty($errors)) {	oai_exit(); }
+if (!empty($errors)) {
+    oai_exit();
+}
 
 foreach($attribs as $val) {
     unset($$val);
@@ -96,7 +96,7 @@ if (isset($args['verb'])) {
         case 'Identify':
             // we never use compression in Identify
             $compress = FALSE;
-            if(count($args)>1) {
+            if (count($args)>1) {
                 foreach($args as $key => $val) {
                     if(strcmp($key,"verb")!=0) {
                         $errors[] = oai_error('badArgument', $key, $val);
@@ -113,7 +113,7 @@ if (isset($args['verb'])) {
             break;
 
         case 'ListSets':
-            if(isset($args['resumptionToken']) && count($args) > 2) {
+            if (isset($args['resumptionToken']) && count($args) > 2) {
                 $errors[] = oai_error('exclusiveArgument');
             }
             $checkList = array("ops"=>array("resumptionToken"));

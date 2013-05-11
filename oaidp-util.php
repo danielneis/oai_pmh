@@ -54,30 +54,24 @@ function debug_message($msg) {
  * is needed.
  */
 function checkArgs($args, $checkList) {
-    //	global $errors, $TOKEN_VALID, $METADATAFORMATS;
     global $errors,  $METADATAFORMATS;
-    //	$verb = $args['verb'];
-    unset($args["verb"]);
-
-    debug_print_r('checkList',$checkList);
-    debug_print_r('args',$args);
 
     // "verb" has been checked before, no further check is needed
+    unset($args["verb"]);
+
     if(isset($checkList['required'])) {
         for($i = 0; $i < count($checkList["required"]); $i++) {
-            debug_message("Checking: par$i: ". $checkList['required'][$i] . " in ");
-            debug_var_dump("isset(\$args[\$checkList['required'][\$i]])",isset($args[$checkList['required'][$i]]));
-            // echo "key exists". array_key_exists($checkList["required"][$i],$args)."\n";
+
             if(isset($args[$checkList['required'][$i]])==false) {
-                // echo "caught\n";
                 $errors[] = oai_error('missingArgument', $checkList["required"][$i]);
             } else {
                 // if metadataPrefix is set, it is in required section
                 if(isset($args['metadataPrefix'])) {
                     $metadataPrefix = $args['metadataPrefix'];
                     // Check if the format is supported, it has enough infor (an array), last if a handle has been defined.
-                    if (!array_key_exists ($metadataPrefix, $METADATAFORMATS) || !(is_array($METADATAFORMATS[$metadataPrefix])
-                                || !isset($METADATAFORMATS[$metadataPrefix]['myhandler']))) {
+                    if (!array_key_exists($metadataPrefix, $METADATAFORMATS) ||
+                        !(is_array($METADATAFORMATS[$metadataPrefix]) ||
+                        !isset($METADATAFORMATS[$metadataPrefix]['myhandler']))) {
                         $errors[] = oai_error('cannotDisseminateFormat', 'metadataPrefix', $metadataPrefix);
                     }
                 }
@@ -85,15 +79,13 @@ function checkArgs($args, $checkList) {
             }
         }
     }
-    debug_message('Before return');
-    debug_print_r('errors',$errors);
+
     if (!empty($errors)) return;
 
     // check to see if there is unwanted	
     foreach($args as $key => $val) {
-        debug_message("checkArgs: $key");
+
         if(!in_array($key, $checkList["ops"])) {
-            debug_message("Wrong\n".print_r($checkList['ops'],true)); 
             $errors[] = oai_error('badArgument', $key, $val);
         }
         switch ($key) { 

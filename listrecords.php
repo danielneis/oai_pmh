@@ -113,13 +113,11 @@ if ($num_rows - $deliveredrecords > $maxItems) {
     $cursor = (int)$deliveredrecords + $maxItems;
     $restoken = createResumToken($cursor, $extquery, $metadataPrefix);
     $expirationdatetime = gmstrftime('%Y-%m-%dT%TZ', time()+TOKEN_VALID);	
-}
+} elseif (isset($args['resumptionToken'])) {
 // Last delivery, return empty ResumptionToken
-elseif (isset($args['resumptionToken'])) {
     $restoken = $args['resumptionToken']; // just used as an indicator
     unset($expirationdatetime);
 }
-
 
 if (isset($args['resumptionToken'])) {
     debug_message("Try to resume because a resumptionToken supplied.") ;
