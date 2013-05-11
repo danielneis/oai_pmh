@@ -66,13 +66,6 @@ require_once('config/metadataformats.php');
 require_once('config/sets.php');
 require_once('config/database.php');
 
-// Create a PDO object
-try {
-    $db = new PDO($DSN, $DB_USER, $DB_PASSWD);
-} catch (PDOException $e) {
-    exit('Connection failed: ' . $e->getMessage());
-}
-
 // For generic usage or just trying:
 // require_once('xml_creater.php');
 // In common cases, you have to implement your own code to act fully and correctly.
@@ -90,12 +83,19 @@ if (SHOW_QUERY_ERROR) {
     echo "Args:\n"; print_r($args);
 }
 
+
 if (isset($args['verb'])) {
+
+    require_once('oai2server.php');
+    $oai2 = new OAI2Server($args);
+
     switch ($args['verb']) {
 
         case 'Identify':
+
             // we never use compression in Identify
             $compress = FALSE;
+
             if (count($args)>1) {
                 foreach($args as $key => $val) {
                     if(strcmp($key,"verb")!=0) {
@@ -103,13 +103,19 @@ if (isset($args['verb'])) {
                     }	
                 }
             }
-            if (empty($errors)) include 'identify.php';
+
+            if (empty($errors)) {
+                $outputObj = $oai2->identify($show_identifier, $repositoryIdentifier, $delimiter, $sampleIdentifier);
+            }
             break;
 
         case 'ListMetadataFormats':
+
             $checkList = array("ops"=>array("identifier"));
             checkArgs($args, $checkList);
-            if (empty($errors)) include 'listmetadataformats.php';
+            if (empty($errors)) {
+                $outputObj = $oai2->listMetadataFormats();
+            }
             break;
 
         case 'ListSets':
@@ -118,13 +124,17 @@ if (isset($args['verb'])) {
             }
             $checkList = array("ops"=>array("resumptionToken"));
             checkArgs($args, $checkList);
-            if (empty($errors)) include 'listsets.php';
+            if (empty($errors)) {
+                $outputObj = $oai2->listSets($SETS);
+            }
             break;
 
         case 'GetRecord':
             $checkList = array("required"=>array("metadataPrefix","identifier"));
             checkArgs($args, $checkList);
-            if (empty($errors)) include 'getrecord.php';
+            if (empty($errors)) {
+                $outputObj = $oai2->getRecord();
+            }
             break;
 
         case 'ListIdentifiers':
@@ -138,7 +148,9 @@ if (isset($args['verb'])) {
                 $checkList = array("required"=>array("metadataPrefix"),"ops"=>array("from","until","set"));
             }
             checkArgs($args, $checkList);
-            if (empty($errors)) include 'listrecords.php';
+            if (empty($errors)) {
+                $outputObj = $oai2->listRecords($SETS);
+            }
             break;
 
         default:
