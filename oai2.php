@@ -11,17 +11,6 @@
  * - oaidp-config.php : Configuration of provider
  * - oaidp-util.php : Utility functions
  * - xml_creater.php : XML generating functions
- * - Actions:
- * 	- identify.php : About the provider
- * 	- listmetadataformats.php : List supported metadata formats
- * 	- listrecords.php : List identifiers and records
- * 	- listsets.php : List sets
- * 	- getrecord.php : Get a record
- *		- Your own implementation for providing metadata records.
- *
- * It also initiates:
- *	- PDO datbase connection object $db.
- *	- ANDS_XML XML document handler $outputObj.  
  *
  * \todo <b>Remember:</b> to define your own classess for generating metadata records.
  * In common cases, you have to implement your own code to act fully and correctly.
@@ -29,14 +18,8 @@
  */
 
 /**
- * An array for collecting erros which can be reported later. It will be checked before a new action is taken.
- */
-$errors = array();
-
-/**
  * Supported attributes associate to verbs.
  */
-$attribs = array ('from', 'identifier', 'metadataPrefix', 'set', 'resumptionToken', 'until');
 
 if (in_array($_SERVER['REQUEST_METHOD'],array('GET','POST'))) {
     $args = $_REQUEST;
@@ -45,6 +28,7 @@ if (in_array($_SERVER['REQUEST_METHOD'],array('GET','POST'))) {
 }
 
 require_once('oaidp-util.php');
+
 // Always using htmlentities() function to encodes the HTML entities submitted by others.
 // No one can be trusted.
 foreach ($args as $key => $val) {
@@ -57,6 +41,7 @@ if (!empty($errors)) {
     oai_exit();
 }
 
+$attribs = array ('from', 'identifier', 'metadataPrefix', 'set', 'resumptionToken', 'until');
 foreach($attribs as $val) {
     unset($$val);
 }
@@ -79,105 +64,36 @@ if (isset($compression) && is_array($compression)) {
     }
 }
 
-if (SHOW_QUERY_ERROR) {
-    echo "Args:\n"; print_r($args);
-}
+require_once('oai2server.php');
 
+/**
+ * Identifier settings. It needs to have proper values to reflect the settings of the data provider.
+ * Is MUST be declared in this order
+ *
+ * - $identifyResponse['repositoryName'] : compulsory. A human readable name for the repository;
+ * - $identifyResponse['baseURL'] : compulsory. The base URL of the repository;
+ * - $identifyResponse['protocolVersion'] : compulsory. The version of the OAI-PMH supported by the repository;
+ * - $identifyResponse['earliestDatestamp'] : compulsory. A UTCdatetime that is the guaranteed lower limit of all datestamps recording changes, modifications, or deletions in the repository. A repository must not use datestamps lower than the one specified by the content of the earliestDatestamp element. earliestDatestamp must be expressed at the finest granularity supported by the repository.
+ * - $identifyResponse['deletedRecord'] : the manner in which the repository supports the notion of deleted records. Legitimate values are no ; transient ; persistent with meanings defined in the section on deletion.
+ * - $identifyResponse['granularity'] : the finest harvesting granularity supported by the repository. The legitimate values are YYYY-MM-DD and YYYY-MM-DDThh:mm:ssZ with meanings as defined in ISO8601.
+ *
+ */
+$identifyResponse = array();
+$identifyResponse["repositoryName"] = 'Moodle Neis';
+$identifyResponse["baseURL"] = 'http://'.$_SERVER['SERVER_NAME'].$_SERVER['SCRIPT_NAME'];
+$identifyResponse["protocolVersion"] = '2.0';
+$identifyResponse['adminEmail'] = 'danielneis@gmail.com';
+$identifyResponse["earliestDatestamp"] = '2013-01-01T12:00:00Z';
+$identifyResponse["deletedRecord"] = 'no'; // How your repository handles deletions
+                                           // no:             The repository does not maintain status about deletions.
+                                           //                It MUST NOT reveal a deleted status.
+                                           // persistent:    The repository persistently keeps track about deletions
+                                           //                with no time limit. It MUST consistently reveal the status
+                                           //                of a deleted record over time.
+                                           // transient:   The repository does not guarantee that a list of deletions is
+                                           //                maintained. It MAY reveal a deleted status for records.
+$identifyResponse["granularity"] = 'YYYY-MM-DDThh:mm:ssZ';
 
-if (isset($args['verb'])) {
+$repositoryIdentifier = 'dev2.moodle.ufsc.br.';
 
-    require_once('oai2server.php');
-    $oai2 = new OAI2Server($args);
-
-    switch ($args['verb']) {
-
-        case 'Identify':
-
-            // we never use compression in Identify
-            $compress = FALSE;
-
-            if (count($args)>1) {
-                foreach($args as $key => $val) {
-                    if(strcmp($key,"verb")!=0) {
-                        $errors[] = oai_error('badArgument', $key, $val);
-                    }	
-                }
-            }
-
-            if (empty($errors)) {
-                $outputObj = $oai2->identify($show_identifier, $repositoryIdentifier, $delimiter, $sampleIdentifier);
-            }
-            break;
-
-        case 'ListMetadataFormats':
-
-            $checkList = array("ops"=>array("identifier"));
-            checkArgs($args, $checkList);
-            if (empty($errors)) {
-                $outputObj = $oai2->listMetadataFormats();
-            }
-            break;
-
-        case 'ListSets':
-            if (isset($args['resumptionToken']) && count($args) > 2) {
-                $errors[] = oai_error('exclusiveArgument');
-            }
-            $checkList = array("ops"=>array("resumptionToken"));
-            checkArgs($args, $checkList);
-            if (empty($errors)) {
-                $outputObj = $oai2->listSets($SETS);
-            }
-            break;
-
-        case 'GetRecord':
-            $checkList = array("required"=>array("metadataPrefix","identifier"));
-            checkArgs($args, $checkList);
-            if (empty($errors)) {
-                $outputObj = $oai2->getRecord();
-            }
-            break;
-
-        case 'ListIdentifiers':
-        case 'ListRecords':
-            if(isset($args['resumptionToken'])) {
-                if (count($args) > 2) {
-                    $errors[] = oai_error('exclusiveArgument');
-                }
-                $checkList = array("ops"=>array("resumptionToken"));
-            } else {
-                $checkList = array("required"=>array("metadataPrefix"),"ops"=>array("from","until","set"));
-            }
-            checkArgs($args, $checkList);
-            if (empty($errors)) {
-                $outputObj = $oai2->listRecords($SETS);
-            }
-            break;
-
-        default:
-            // we never use compression with errors
-            $compress = FALSE;
-            $errors[] = oai_error('badVerb', $args['verb']);
-    } /*switch */
-} else {
-    $errors[] = oai_error('noVerb');
-}
-
-if (!empty($errors)) {
-    oai_exit();
-}
-
-if ($compress) {
-    ob_start('ob_gzhandler');
-}
-
-header(CONTENT_TYPE);
-
-if (isset($outputObj)) {
-    $outputObj->display();
-} else {
-    exit("There is a bug in codes");
-}
-
-if ($compress) {
-    ob_end_flush();
-}
+$oai2 = new OAI2Server($args, $repositoryIdentifier, $identifyResponse);

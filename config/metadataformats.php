@@ -23,12 +23,10 @@ $METADATAFORMATS = array (
     'rif' => array('metadataPrefix'=>'rif',
                    'schema'=>'http://services.ands.org.au/sandbox/orca/schemata/registryObjects.xsd',
                    'metadataNamespace'=>'http://ands.org.au/standards/rif-cs/registryObjects/',
-                   'myhandler'=>'record_rif.php'
     ),
     'oai_dc' => array('metadataPrefix'=>'oai_dc',
                       'schema'=>'http://www.openarchives.org/OAI/2.0/oai_dc.xsd',
                       'metadataNamespace'=>'http://www.openarchives.org/OAI/2.0/oai_dc/',
-                      'myhandler'=>'record_dc.php',
                       'record_prefix'=>'dc',
                       'record_namespace' => 'http://purl.org/dc/elements/1.1/'
     )

@@ -1,8 +1,93 @@
 <?php
+/* 
+ * - Actions:
+ * 	- identify.php : About the provider
+ * 	- listmetadataformats.php : List supported metadata formats
+ * 	- listrecords.php : List identifiers and records
+ * 	- listsets.php : List sets
+ * 	- getrecord.php : Get a record / Your own implementation for providing metadata records.
+ */
 class OAI2Server {
 
-    function __construct($args) {
+    public $errors = array();
+
+    /* 
+     * @param $delimiter    = ':';  should not be changed. Only useful when NODE description is included in the response to Identifier
+     */
+    function __construct($args, $repositoryIdentifier, $identifyResponse,
+                         $delimiter = ':', $sampleIdentifier = false, $show_identifier = false) {
         $this->args = $args;
+        $this->repositoryIdentier = $repositoryIdentifier;
+        $this->identifyResponse = $identifyResponse;
+        $this->respond();
+    }
+
+    private function respond() {
+        if (!isset($this->args['verb']) || empty($this->args['verb'])) {
+            $this->errors[] = oai_error('noVerb');
+        } else {
+            switch ($this->args['verb']) {
+
+                case 'Identify':
+                    // we never use compression in Identify
+                    $compress = FALSE;
+                    $this->outputObj = $this->identify();
+                    break;
+
+                case 'ListMetadataFormats':
+                    $this->outputObj = $this->listMetadataFormats();
+                    break;
+
+                case 'ListSets':
+                    $this->outputObj = $this->listSets();
+                    break;
+
+                case 'ListIdentifiers':
+                case 'ListRecords':
+                    $this->outputObj = $this->listRecords();
+                    break;
+
+                case 'GetRecord':
+                    $this->outputObj = $this->getRecord();
+                    break;
+
+                default:
+                    // we never use compression with errors
+                    $compress = FALSE;
+                    $this->errors[] = oai_error('badVerb', $this->args['verb']);
+            }
+        }
+        if (empty($this->errors)) {
+            $this->display();
+        } else {
+            $this->errorResponse();
+        }
+    }
+
+    function errorResponse() {
+        $e = new ANDS_Error_XML($this->args,$this->errors);
+        header(CONTENT_TYPE);
+        $e->display();
+        exit();
+    }
+
+    function display() {
+        if (isset($this->outputObj)) {
+
+            if ($compress) {
+                ob_start('ob_gzhandler');
+            }
+
+            header(CONTENT_TYPE);
+            $this->outputObj->display();
+
+            if ($compress) {
+                ob_end_flush();
+            }
+
+        } else {
+            exit("Nothing to output. May be a bug.");
+        }
     }
 
     /**
@@ -13,10 +98,17 @@ class OAI2Server {
      * http://www.openarchives.org/OAI/2.0/guidelines-oai-identifier.htm for details
      */
     public function identify($show_identifier, $repositoryIdentifier, $delimiter, $sampleIdentifier) {
-        global $identifyResponse;
+
+        if (count($this->args) > 1) {
+            foreach($args as $key => $val) {
+                if(strcmp($key,"verb")!=0) {
+                    $this->errors[] = oai_error('badArgument', $key, $val);
+                }	
+            }
+        }
 
         $outputObj = new ANDS_Response_XML($this->args);
-        foreach($identifyResponse as $key => $val) {
+        foreach($this->identifyResponse as $key => $val) {
             $outputObj->add2_verbNode($key, $val);
         }
 
@@ -28,7 +120,7 @@ class OAI2Server {
 
         // As they will not be changed, using string for simplicity.
         $output = '';
-        if ($show_identifier && $repositoryIdentifier && $delimiter && $sampleIdentifier) {
+        if ($this->show_identifier && $this->repositoryIdentifier && $this->delimiter && $this->sampleIdentifier) {
                 $output .= 
         '  <description>
            <oai-identifier xmlns="http://www.openarchives.org/OAI/2.0/oai-identifier"
@@ -137,6 +229,9 @@ class OAI2Server {
     public function listMetadataFormats() {
         global $DSN, $DB_USER, $DB_PASSWD, $METADATAFORMATS, $SQL;
 
+        $checkList = array("ops"=>array("identifier"));
+        $this->checkArgs($checkList);
+
         // Create a PDO object
         try {
             $db = new PDO($DSN, $DB_USER, $DB_PASSWD);
@@ -156,12 +251,12 @@ class OAI2Server {
                     echo "Query: $query<br />\n";
                     die($db->errorInfo());
                 } else {
-                    $errors[] = oai_error('idDoesNotExist','', $identifier);
+                    $this->errors[] = oai_error('idDoesNotExist','', $identifier);
                 }
             } else {
                 $record = $res->fetch();
                 if($record===false) {
-                    $errors[] = oai_error('idDoesNotExist', '', $identifier);
+                    $this->errors[] = oai_error('idDoesNotExist', '', $identifier);
                 } else {
                     $mf = explode(",",$record[$SQL['metadataPrefix']]);    
                 }
@@ -169,8 +264,8 @@ class OAI2Server {
         }
 
         //break and clean up on error
-        if (!empty($errors)) {
-            oai_exit();
+        if (!empty($this->errors)) {
+            $this->errorResponse();
         }
 
         $outputObj = new ANDS_Response_XML($this->args);
@@ -184,8 +279,8 @@ class OAI2Server {
                 $this->addMetedataFormat($outputObj,$key, $val);
             }
         } else { // a very unlikely event
-            $errors[] = oai_error('noMetadataFormats'); 
-            oai_exit();
+            $this->errors[] = oai_error('noMetadataFormats'); 
+            $this->errorResponse();
         }
 
         return $outputObj;
@@ -197,7 +292,16 @@ class OAI2Server {
      * Lists what sets are available to records in the system.
      * This variable is filled in config-sets.php
      */
-    public function listSets($sets) {
+    public function listSets() {
+        global $SETS;
+
+        $sets = $SETS;
+
+        if (isset($this->args['resumptionToken']) && count($this->args) > 2) {
+            $this->errors[] = oai_error('exclusiveArgument');
+        }
+        $checkList = array("ops"=>array("resumptionToken"));
+        $this->checkArgs($checkList);
 
         if (is_array($sets)) {
             $outputObj = new ANDS_Response_XML($this->args);
@@ -215,7 +319,7 @@ class OAI2Server {
                 }
             }
         } else {
-            $errors[] = oai_error('noSetHierarchy');
+            $this->errors[] = oai_error('noSetHierarchy');
             oai_exit();
         }
         return $outputObj;
@@ -233,12 +337,13 @@ class OAI2Server {
     public function getRecord() {
         global $METADATAFORMATS, $DSN, $DB_USER, $DB_PASSWD, $SQL;
 
+        $checkList = array("required"=>array("metadataPrefix","identifier"));
+        $this->checkArgs($checkList);
+
         $metadataPrefix = $this->args['metadataPrefix'];
-        // myhandler is a php file which will be included to generate metadata node.
-        // $inc_record  = $METADATAFORMATS[$metadataPrefix]['myhandler'];
 
         if (!isset($METADATAFORMATS[$metadataPrefix])) {
-            $errors[] = oai_error('cannotDisseminateFormat', 'metadataPrefix', $metadataPrefix);
+            $this->errors[] = oai_error('cannotDisseminateFormat', 'metadataPrefix', $metadataPrefix);
         }
 
         // Create a PDO object
@@ -254,18 +359,18 @@ class OAI2Server {
         $res = $db->query($query);
 
         if ($res===false) {
-            $errors[] = oai_error('idDoesNotExist', '', $identifier); 
+            $this->errors[] = oai_error('idDoesNotExist', '', $identifier); 
         } elseif (!$res->rowCount()) { // based on PHP manual, it might only work for some DBs
-            $errors[] = oai_error('idDoesNotExist', '', $identifier); 
+            $this->errors[] = oai_error('idDoesNotExist', '', $identifier); 
         }
 
-        if (!empty($errors)) {
+        if (!empty($this->errors)) {
             oai_exit();
         }
 
         $record = $res->fetch(PDO::FETCH_ASSOC);
         if ($record===false) {
-            $errors[] = oai_error('idDoesNotExist', '', $identifier);	
+            $this->errors[] = oai_error('idDoesNotExist', '', $identifier);	
         }
 
         $identifier = $record[$SQL['identifier']];;
@@ -273,7 +378,7 @@ class OAI2Server {
         $datestamp = formatDatestamp($record[$SQL['datestamp']]); 
 
         $status_deleted = (isset($record[$SQL['deleted']]) && ($record[$SQL['deleted']] == 'true') && 
-                           ($deletedRecord == 'transient' || $deletedRecord == 'persistent'));
+                           ($this->identifyResponse['deletedRecord'] == 'transient' || $this->identifyResponse['deletedRecord'] == 'persistent'));
 
         $outputObj = new ANDS_Response_XML($this->args);
         $cur_record = $outputObj->create_record();
@@ -296,17 +401,29 @@ class OAI2Server {
      * - Otherwise, set up a query with conditions such as: 'metadataPrefix', 'from', 'until', 'set'.
      * Only 'metadataPrefix' is compulsory.  All conditions are accessible through global array variable <B>$args</B>  by keywords.
      */
-    public function listRecords($sets) {
-        global $SQL, $METADATAFORMATS, $DSN, $DB_USER, $DB_PASSWD;
+    public function listRecords() {
+        global $SQL, $METADATAFORMATS, $DSN, $DB_USER, $DB_PASSWD, $SETS;
+
+        $sets = $SETS;
+
+        if(isset($this->args['resumptionToken'])) {
+            if (count($this->args) > 2) {
+                $this->errors[] = oai_error('exclusiveArgument');
+            }
+            $checkList = array("ops"=>array("resumptionToken"));
+        } else {
+            $checkList = array("required"=>array("metadataPrefix"),"ops"=>array("from","until","set"));
+        }
+        $this->checkArgs($checkList);
 
         // Resume previous session?
         if (isset($this->args['resumptionToken'])) {
             if (!file_exists(TOKEN_PREFIX.$this->args['resumptionToken'])) {
-                $errors[] = oai_error('badResumptionToken', '', $this->args['resumptionToken']);
+                $this->errors[] = oai_error('badResumptionToken', '', $this->args['resumptionToken']);
             } else {
                 $readings = readResumToken(TOKEN_PREFIX.$this->args['resumptionToken']);
                 if ($readings == false) {
-                    $errors[] = oai_error('badResumptionToken', '', $this->args['resumptionToken']);
+                    $this->errors[] = oai_error('badResumptionToken', '', $this->args['resumptionToken']);
                 } else {
                     list($deliveredrecords, $extquery, $metadataPrefix) = $readings;
                 }
@@ -331,46 +448,45 @@ class OAI2Server {
                 if (is_array($sets)) {
                     $extquery .= setQuery($this->args['set']);
                 } else {
-                    $errors[] = oai_error('noSetHierarchy');
+                    $this->errors[] = oai_error('noSetHierarchy');
                 }
             }
         }
 
         if (!isset($METADATAFORMATS[$metadataPrefix])) {
-            $errors[] = oai_error('cannotDisseminateFormat', 'metadataPrefix', $metadataPrefix);
+            $this->errors[] = oai_error('cannotDisseminateFormat', 'metadataPrefix', $metadataPrefix);
         }
 
-        if (!empty($errors)) {
-            oai_exit();
+        if (!empty($this->errors)) {
+            $this->errorResponse();
+        }
+
+        // Create a PDO object
+        try {
+            $db = new PDO($DSN, $DB_USER, $DB_PASSWD);
+        } catch (PDOException $e) {
+            exit('Connection failed: ' . $e->getMessage());
+        }
+
+        $query = selectallQuery($metadataPrefix) . $extquery;
+
+        $res = $db->prepare($query, array(PDO::ATTR_CURSOR => PDO::CURSOR_SCROLL));
+        $r = $res->execute();
+        if ($r===false) {
+            $this->errors[] = oai_error('noRecordsMatch');
         } else {
-
-            // Create a PDO object
-            try {
-                $db = new PDO($DSN, $DB_USER, $DB_PASSWD);
-            } catch (PDOException $e) {
-                exit('Connection failed: ' . $e->getMessage());
-            }
-
-            $query = selectallQuery($metadataPrefix) . $extquery;
-
-            $res = $db->prepare($query, array(PDO::ATTR_CURSOR => PDO::CURSOR_SCROLL));
-            $r = $res->execute();
+            $r = $res->setFetchMode(PDO::FETCH_ASSOC);
             if ($r===false) {
-                $errors[] = oai_error('noRecordsMatch');
-            } else {
-                $r = $res->setFetchMode(PDO::FETCH_ASSOC);
-                if ($r===false) {
-                    exit("FetchMode is not supported");
-                }
-                $num_rows = rowCount($metadataPrefix, $extquery, $db);
-                if ($num_rows==0) {
-                    $errors[] = oai_error('noRecordsMatch');
-                }
+                exit("FetchMode is not supported");
+            }
+            $num_rows = rowCount($metadataPrefix, $extquery, $db);
+            if ($num_rows==0) {
+                $this->errors[] = oai_error('noRecordsMatch');
             }
         }
 
-        if (!empty($errors)) {
-            oai_exit();
+        if (!empty($this->errors)) {
+            $this->errorResponse();
         }
 
         // Will we need a new ResumptionToken?
@@ -415,11 +531,9 @@ class OAI2Server {
             $datestamp = formatDatestamp($record[$SQL['datestamp']]);
             $setspec = $record[$SQL['set']];
 
-            // debug_var_dump('record', $record);
             $status_deleted = (isset($record[$SQL['deleted']]) && ($record[$SQL['deleted']] === true) &&
-                    ($deletedRecord == 'transient' || $deletedRecord == 'persistent'));
+                    ($this->identifyResponse['deletedRecord'] == 'transient' || $this->identifyResponse['deletedRecord'] == 'persistent'));
 
-            //debug_var_dump('status_deleted', $status_deleted);
             if($this->args['verb']=='ListRecords') {
                 $cur_record = $outputObj->create_record();
                 $cur_header = $outputObj->create_header($identifier, $datestamp,$setspec,$cur_record);
@@ -498,6 +612,70 @@ class OAI2Server {
         foreach ($record as $r => $v) {
             if (!empty($v)) {
                 $outputObj->addChild($schema_node, str_replace('_', ':', $r), $v);
+            }
+        }
+    }
+
+    /** Check if provided correct arguments for a request.
+     *
+     * Only number of parameters is checked.
+     * metadataPrefix has to be checked before it is used.
+     * set has to be checked before it is used.
+     * resumptionToken has to be checked before it is used.
+     * from and until can easily checked here because no extra information 
+     * is needed.
+     */
+    private function checkArgs($checkList) {
+        global $METADATAFORMATS;
+
+        // "verb" has been checked before, no further check is needed
+        $verb =  $this->args["verb"];
+
+        $test_args = $this->args;
+        unset($test_args["verb"]);
+
+        if(isset($checkList['required'])) {
+            for($i = 0; $i < count($checkList["required"]); $i++) {
+
+                if(isset($test_args[$checkList['required'][$i]])==false) {
+                    $this->errors[] = oai_error('missingArgument', $checkList["required"][$i]);
+                } else {
+                    // if metadataPrefix is set, it is in required section
+                    if(isset($test_args['metadataPrefix'])) {
+                        $metadataPrefix = $test_args['metadataPrefix'];
+                        // Check if the format is supported, it has enough infor (an array), last if a handle has been defined.
+                        if (!array_key_exists($metadataPrefix, $METADATAFORMATS) ||
+                                !(is_array($METADATAFORMATS[$metadataPrefix]) ||
+                                    !isset($METADATAFORMATS[$metadataPrefix]['myhandler']))) {
+                            $this->errors[] = oai_error('cannotDisseminateFormat', 'metadataPrefix', $metadataPrefix);
+                        }
+                    }
+                    unset($test_args[$checkList["required"][$i]]);
+                }
+            }
+        }
+
+        if (!empty($this->errors)) return;
+
+        // check to see if there is unwanted	
+        foreach($test_args as $key => $val) {
+
+            if(!in_array($key, $checkList["ops"])) {
+                $this->errors[] = oai_error('badArgument', $key, $val);
+            }
+            switch ($key) { 
+                case 'from':
+                case 'until':
+                    if(!checkDateFormat($val)) {
+                        $this->errors[] = oai_error('badGranularity', $key, $val); 
+                    }
+                    break;
+
+                case 'resumptionToken':
+                    // only check for expairation
+                    if((int)$val+TOKEN_VALID < time())
+                        $this->errors[] = oai_error('badResumptionToken');
+                    break;		
             }
         }
     }

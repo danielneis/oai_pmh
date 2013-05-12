@@ -6,105 +6,6 @@
  * A collection of functions used.
  */
 
-/** Dump information of a varible for debugging,
- * only works when SHOW_QUERY_ERROR is true.
- * \param $var_name Type: string Name of variable is being debugded
- * \param $var Type: mix Any type of varibles used in PHP
- * \see SHOW_QUERY_ERROR in oaidp-config.php
- */
-function debug_var_dump($var_name, $var) {
-    if (SHOW_QUERY_ERROR) {
-        echo "Dumping \${$var_name}: \n";
-        var_dump($var)."\n";
-    }
-} 
-
-/** Prints human-readable information about a variable for debugging,
- * only works when SHOW_QUERY_ERROR is true.
- * \param $var_name Type: string Name of variable is being debugded
- * \param $var Type: mix Any type of varibles used in PHP
- * \see SHOW_QUERY_ERROR in oaidp-config.php
- */
-function debug_print_r($var_name, $var) {
-    if (SHOW_QUERY_ERROR) {
-        echo "Printing \${$var_name}: \n";
-        print_r($var)."\n";
-    }
-} 
-
-/** Prints a message for debugging,
- * only works when SHOW_QUERY_ERROR is true.
- * PHP function print_r can be used to construct message with <i>return</i> parameter sets to true.
- * \param $msg Type: string Message needs to be shown
- * \see SHOW_QUERY_ERROR in oaidp-config.php
- */
-function debug_message($msg) {
-    if (SHOW_QUERY_ERROR) {
-        echo $msg,"\n";
-    }
-}
-
-/** Check if provided correct arguments for a request.
- *
- * Only number of parameters is checked.
- * metadataPrefix has to be checked before it is used.
- * set has to be checked before it is used.
- * resumptionToken has to be checked before it is used.
- * from and until can easily checked here because no extra information 
- * is needed.
- */
-function checkArgs($args, $checkList) {
-    global $errors,  $METADATAFORMATS;
-
-    // "verb" has been checked before, no further check is needed
-    unset($args["verb"]);
-
-    if(isset($checkList['required'])) {
-        for($i = 0; $i < count($checkList["required"]); $i++) {
-
-            if(isset($args[$checkList['required'][$i]])==false) {
-                $errors[] = oai_error('missingArgument', $checkList["required"][$i]);
-            } else {
-                // if metadataPrefix is set, it is in required section
-                if(isset($args['metadataPrefix'])) {
-                    $metadataPrefix = $args['metadataPrefix'];
-                    // Check if the format is supported, it has enough infor (an array), last if a handle has been defined.
-                    if (!array_key_exists($metadataPrefix, $METADATAFORMATS) ||
-                        !(is_array($METADATAFORMATS[$metadataPrefix]) ||
-                        !isset($METADATAFORMATS[$metadataPrefix]['myhandler']))) {
-                        $errors[] = oai_error('cannotDisseminateFormat', 'metadataPrefix', $metadataPrefix);
-                    }
-                }
-                unset($args[$checkList["required"][$i]]);
-            }
-        }
-    }
-
-    if (!empty($errors)) return;
-
-    // check to see if there is unwanted	
-    foreach($args as $key => $val) {
-
-        if(!in_array($key, $checkList["ops"])) {
-            $errors[] = oai_error('badArgument', $key, $val);
-        }
-        switch ($key) { 
-            case 'from':
-            case 'until':
-                if(!checkDateFormat($val)) {
-                    $errors[] = oai_error('badGranularity', $key, $val); 
-                }
-                break;
-
-            case 'resumptionToken':
-                // only check for expairation
-                if((int)$val+TOKEN_VALID < time())
-                    $errors[] = oai_error('badResumptionToken');
-                break;		
-        }
-    }
-}
-
 /** Validates an identifier. The pattern is: '/^[-a-z\.0-9]+$/i' which means 
  * it accepts -, letters and numbers. 
  * Used only by function <B>oai_error</B> code idDoesNotExist. 
@@ -156,25 +57,6 @@ function prepare_set_names() {
         $a[$i] = $SETS[$i]['setSpec'];
     }
     return $a;
-}
-
-/** Finish a request when there is an error: send back errors. */
-function oai_exit() {
-
-    //	global $CONTENT_TYPE;
-    header(CONTENT_TYPE);
-    global $args,$errors,$compress;
-    $e = new ANDS_Error_XML($args,$errors);
-    if ($compress) {
-        ob_start('ob_gzhandler');
-    }
-
-    $e->display();
-
-    if ($compress) {
-        ob_end_flush();
-    }
-    exit();
 }
 
 // ResumToken section
