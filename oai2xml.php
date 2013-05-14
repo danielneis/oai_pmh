@@ -1,6 +1,6 @@
 <?php
 
-class OAI2XML {
+class OAI2XMLResponse {
 
     public $doc; // DOMDocument. Handle of current XML Document object
 
@@ -20,45 +20,30 @@ class OAI2XML {
         foreach($request_args as $key => $value) {
             $request->setAttribute($key,$value);
         }
+
+        $this->verbNode = $this->addChild($this->doc->documentElement,$this->verb);
     }
 
     function display() {
-        $pr = new DOMDocument();
-        $pr->preserveWhiteSpace = false;
-        $pr->formatOutput = true;
-        $pr->loadXML($this->doc->saveXML());
-        echo $pr->saveXML();
+        $this->doc->formatOutput = true;
+        $this->doc->preserveWhiteSpace = false;
+        echo $this->doc->saveXML();
     }
 
     /**
      * Add a child node to a parent node on a XML Doc: a worker function.
      *
-     * @param $mom_node
-     *   Type: DOMNode. The target node.
+     * @param $mom_node Type: DOMNode. The target node.
+     * @param $name     Type: string. The name of child nade is being added
+     * @param $value    Type: string. Text for the adding node if it is a text node.
      *
-     * @param $name
-     *   Type: string. The name of child nade is being added
-     *
-     * @param $value
-     *   Type: string. Text for the adding node if it is a text node.
-     *
-     * @return DOMElement $added_node
-     *   The newly created node, can be used for further expansion.
-     *   If no further expansion is expected, return value can be igored.
+     * @return DOMElement $added_node * The newly created node
      */
 
     function addChild($mom_node,$name, $value='') {
         $added_node = $this->doc->createElement($name,$value);
         $added_node = $mom_node->appendChild($added_node);
         return $added_node;
-    }
-}
-
-class OAI2XMLResponse extends OAI2XML {
-
-    function __construct($verb, $request_args) {
-        parent::__construct($verb, $request_args);
-        $this->verbNode = $this->addChild($this->doc->documentElement,$this->verb);
     }
 
     /**
@@ -104,10 +89,10 @@ class OAI2XMLResponse extends OAI2XML {
     /**
      * If there are too many records request could not finished a resumpToken is generated to let harvester know
      *
-     * \param $token Type: string. A random number created somewhere?
-     * \param $expirationdatetime Type: string. A string representing time.
-     * \param $num_rows Type: integer. Number of records retrieved.
-     * \param $cursor Type: string. Cursor can be used for database to retrieve next time.
+     * @param $token              Type: string. A random number created somewhere?
+     * @param $expirationdatetime Type: string. A string representing time.
+     * @param $num_rows           Type: integer. Number of records retrieved.
+     * @param $cursor             Type: string. Cursor can be used for database to retrieve next time.
      */
     function createResumptionToken($token, $expirationdatetime, $num_rows, $cursor=null) {
         $resump_node = $this->addChild($this->verbNode,"resumptionToken",$token);

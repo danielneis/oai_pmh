@@ -9,7 +9,6 @@
  * 
  * It needs other files:
  * - oaidp-util.php : Utility functions
- * - xml_creater.php : XML generating functions
  *
  */
 
