@@ -4,8 +4,9 @@ class OAI2XML {
 
     public $doc; // DOMDocument. Handle of current XML Document object
 
-    function __construct($request_args) {
+    function __construct($uri, $verb, $request_args) {
 
+        $this->verb = $verb;
         $this->doc = new DOMDocument("1.0","UTF-8");
         $oai_node = $this->doc->createElement("OAI-PMH");
         $oai_node->setAttribute("xmlns","http://www.openarchives.org/OAI/2.0/");
@@ -14,7 +15,8 @@ class OAI2XML {
         $this->addChild($oai_node,"responseDate",gmdate("Y-m-d\TH:i:s\Z"));
         $this->doc->appendChild($oai_node);
 
-        $request = $this->addChild($this->doc->documentElement,"request",MY_URI);
+        $request = $this->addChild($this->doc->documentElement,"request",$uri);
+        $request->setAttribute('verb', $this->verb);
         foreach($request_args as $key => $value) {
             $request->setAttribute($key,$value);
         }
@@ -52,16 +54,67 @@ class OAI2XML {
     }
 }
 
-class OAI2XMLError extends OAI2XML {
+class OAI2XMLResponse extends OAI2XML {
 
-    function __construct($request_args, $errors) {
-        parent::__construct($request_args);
-
-        $oai_node = $this->doc->documentElement;
-        foreach($errors as $e) {
-            $node = $this->addChild($oai_node,"error",$e->getMessage());
-            $node->setAttribute("code",$e->getCode());
-        }
+    function __construct($verb, $request_args) {
+        parent::__construct($verb, $request_args);
+        $this->verbNode = $this->addChild($this->doc->documentElement,$this->verb);
     }
 
+    /**
+     * Add direct child nodes to verb node (OAI-PMH), e.g. response to ListMetadataFormats.
+     * Different verbs can have different required child nodes.
+     * \see create_record, create_header
+     *
+     * \param $nodeName Type: string. The name of appending node.
+     * \param $value Type: string. The content of appending node.
+     */
+    function addToVerbNode($nodeName, $value=null) {
+        return $this->addChild($this->verbNode,$nodeName,$value);
+    }
+
+    /**
+     * Headers are enclosed inside of \<record\> to the query of ListRecords, ListIdentifiers and etc.
+     *
+     * \param $identifier Type: string. The identifier string for node \<identifier\>.
+     * \param $timestamp Type: timestamp. Timestapme in UTC format for node \<datastamp\>.
+     * \param $ands_class Type: mix. Can be an array or just a string. Content of \<setSpec\>.
+     * \param $add_to_node Type: DOMElement. Default value is null.
+     * In normal cases, $add_to_node is the \<record\> node created previously. When it is null, the newly created header node is attatched to $this->verbNode.
+     * Otherwise it will be attatched to the desired node defined in $add_to_node.
+     */
+    function createHeader($identifier,$timestamp,$ands_class, $add_to_node=null) {
+        if(is_null($add_to_node)) {
+            $header_node = $this->addToVerbNode("header");
+        } else {
+            $header_node = $this->addChild($add_to_node,"header");
+        }
+        $this->addChild($header_node,"identifier",$identifier);
+        $this->addChild($header_node,"datestamp",$timestamp);
+        if (is_array($ands_class)) {
+            foreach ($ands_class as $setspec) {
+                $this->addChild($header_node,"setSpec",$setspec);
+            }
+        } else {
+            $this->addChild($header_node,"setSpec",$ands_class);
+        }
+        return $header_node;
+    }
+
+    /**
+     * If there are too many records request could not finished a resumpToken is generated to let harvester know
+     *
+     * \param $token Type: string. A random number created somewhere?
+     * \param $expirationdatetime Type: string. A string representing time.
+     * \param $num_rows Type: integer. Number of records retrieved.
+     * \param $cursor Type: string. Cursor can be used for database to retrieve next time.
+     */
+    function createResumptionToken($token, $expirationdatetime, $num_rows, $cursor=null) {
+        $resump_node = $this->addChild($this->verbNode,"resumptionToken",$token);
+        if(isset($expirationdatetime)) {
+            $resump_node->setAttribute("expirationDate",$expirationdatetime);
+        }
+        $resump_node->setAttribute("completeListSize",$num_rows);
+        $resump_node->setAttribute("cursor",$cursor);
+    }
 }

@@ -73,6 +73,11 @@ class OAI2Exception extends Exception {
                 'code' => 'badArgument',
             )
         );
-        parent::__construct($this->errorTable[$code]['text'], $code);
+        parent::__construct($this->errorTable[$code]['text']);
+        $this->code = $code;
+    }
+
+    public function getOAI2Code() {
+        return $this->code;
     }
 }

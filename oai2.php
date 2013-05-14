@@ -13,10 +13,7 @@
  *
  */
 
-define('MY_URI', 'dev2.moodle.ufsc.br');
-
 require_once('oaidp-util.php');
-require_once('xml_creater.php');
 require_once('oai2server.php');
 
 /**
@@ -47,11 +44,31 @@ $identifyResponse["deletedRecord"] = 'no'; // How your repository handles deleti
                                            //                maintained. It MAY reveal a deleted status for records.
 $identifyResponse["granularity"] = 'YYYY-MM-DDThh:mm:ssZ';
 
-$oai2 = new OAI2Server($_REQUEST, $identifyResponse,
+$example_record = array('identifier' => 'dev.testing.pmh',
+                        'datestamp' => date('Y-m-d-H:s'),
+                        'set' => 'class:activity',
+                        'metadata' => array(
+                            'container_name' => 'oai_dc:dc',
+                            'container_attributes' => array(
+                                'xmlns:oai_dc' => "http://www.openarchives.org/OAI/2.0/oai_dc/",
+                                'xmlns:dc' => "http://purl.org/dc/elements/1.1/",
+                                'xmlns:xsi' => "http://www.w3.org/2001/XMLSchema-instance",
+                                'xsi:schemaLocation' =>
+                                'http://www.openarchives.org/OAI/2.0/oai_dc/ http://www.openarchives.org/OAI/2.0/oai_dc.xsd'
+                            ),
+                            'fields' => array(
+                                'dc:title' => 'Testing records',
+                                'dc:author' => 'Neis'
+                            )
+                       ));
+
+$oai2 = new OAI2Server('neis.moodle.ufsc.br', $_GET, $identifyResponse,
     array(
         'ListMetadataFormats' =>
         function($identifier = '') {
-            // throws new OAI2Exception('idDoesNotExist', '', $identifier) 
+            if ($identifier == 'a.b.c') {
+                throw new OAI2Exception('idDoesNotExist', '', $identifier);
+            }
             return
                 array('rif' => array('metadataPrefix'=>'rif',
                                      'schema'=>'http://services.ands.org.au/sandbox/orca/schemata/registryObjects.xsd',
@@ -85,35 +102,22 @@ $oai2 = new OAI2Server($_REQUEST, $identifyResponse,
 
         'ListRecords' =>
         function($metadataPrefix, $from = '', $until = '', $set = '', $count = false, $deliveredRecords = 0, $maxItems = 0) {
+            global $example_record;
             // throws new OAI2Exception('noRecordsMatch')
             // throws new OAI2Exception('noSetHierarchy')
             if ($count) {
-                return 10;
+                return 1;
             }
-            return array();
+            return array($example_record);
         },
 
         'GetRecord' =>
         function($identifier, $metadataPrefix) {
-            // throws new OAI2Exception('idDoesNotExist', '', $identifier) if record not found
-
-            return array('identifier' => 'dev.testing.pmh',
-                         'datestamp' => date('Y-m-d-H:s'),
-                         'set' => 'class:activity',
-                         'metadata' => array(
-                             'container_name' => 'oai_dc:dc',
-                             'container_attributes' => array(
-                                 'xmlns:oai_dc' => "http://www.openarchives.org/OAI/2.0/oai_dc/",
-                                 'xmlns:dc' => "http://purl.org/dc/elements/1.1/",
-                                 'xmlns:xsi' => "http://www.w3.org/2001/XMLSchema-instance",
-                                 'xsi:schemaLocation' =>
-                                 'http://www.openarchives.org/OAI/2.0/oai_dc/ http://www.openarchives.org/OAI/2.0/oai_dc.xsd'
-                             ),
-                             'fields' => array(
-                                 'dc:title' => 'Testing records',
-                                 'dc:author' => 'Neis'
-                             )
-                         ));
+            global $example_record;
+            if ($identifier == 'a.b.c') {
+                throw new OAI2Exception('idDoesNotExist', '', $identifier);
+            }
+            return $example_record;
         },
     )
 );
