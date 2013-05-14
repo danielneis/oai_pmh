@@ -1,145 +1,15 @@
 <?php
 /**
- * \file
- * \brief functions and class related to generating XML response file.
+ * functions and class related to generating XML response file.
  *
- * Example usage:
- *
- * \code
- * $par_array = array("verb"=>"ListRecords","resumptionToken"=>"9CD1DA87F59C3E960871F4F3C9D093887C17D174");
- * // Example 1: Error response
- * $error_array[] = oai_error("badVerb","Rubish");
- * $error_array[] = oai_error("sameVerb");
- * $e = new ANDS_Error_XML($par_array,$error_array);
- * $e->display();
- *
-
- * // Example 2: Normal response without error codes
+ * Example: Normal response without error codes
  * $par_array = array("verb"=>"ListRecords","resumptionToken"=>"9CD1DA87F59C3E960871F4F3C9D093887C17D174");
  * $test = new ANDS_Response_XML($par_array);
  * $record_node = $test->create_record();
  * $test->create_header("function: identifier string",gmdate("Y-m-d\TH:i:s\Z"),"collection",$record_node);
  * $test->create_metadata($record_node);
  * $test->display();
- * \endcode
- *
- * \see http://www.openarchives.org/OAI/openarchivesprotocol.html#ErrorConditions
  */
-/*
-http://www.openarchives.org/OAI/openarchivesprotocol.html#ErrorConditions
-
-badArgument:
-	The request includes illegal arguments, is missing required arguments, includes a repeated argument, or values for arguments have an illegal syntax. Applied to all verbs.
-
-badResumptionToken:
-	The value of the resumptionToken argument is invalid or expired. 	Applied to: ListIdentifiers, ListRecords, ListSets
-
-badVerb:
-	Value of the verb argument is not a legal OAI-PMH verb, the verb argument is missing, or the verb argument is repeated. 	N/A
-
-cannotDisseminateFormat:
-	The metadata format identified by the value given for the metadataPrefix argument is not supported by the item or by the repository. 	Applied to GetRecord, ListIdentifiers, ListRecords
-
-idDoesNotExist:
-	The value of the identifier argument is unknown or illegal in this repository. 	Applied to GetRecord, ListMetadataFormats
-
-noRecordsMatch:
-	The combination of the values of the from, until, set and metadataPrefix arguments results in an empty list. Applied to	ListIdentifiers, ListRecords
-	
-noMetadataFormats:
-	There are no metadata formats available for the specified item. 	Applied to ListMetadataFormats.
-	
-noSetHierarchy:
-	The repository does not support sets. Applied to ListSets, ListIdentifiers, ListRecords
-
-*/
-
-/** utility funciton to mapping error codes to readable messages */
-function oai_error($code, $argument = '', $value = '') {
-
-    switch ($code) {
-        case 'badArgument' :
-            $text = "Attribute '{$argument}' is not allowed to appear in element 'request'.";
-            break;
-
-        case 'badGranularity' :
-            $text = "The value '{$value}' of attribute '{$argument}' on element 'request' is not valid with respect to its type, 'UTCdatetimeType'.";
-            $code = 'badArgument';
-            break;
-
-        case 'badResumptionToken' :
-            $text = "The resumptionToken '{$value}' does not exist or has already expired.";
-            break;
-
-        case 'badRequestMethod' :
-            $text = "The request method '{$argument}' is unknown.";
-            $code = 'badVerb';
-            break;
-
-        case 'badVerb' :
-            $text = "The value '{$argument}' of attribute 'verb' on element 'request' is not valid with respect to its type, 'verbType'";
-            break;
-
-        case 'cannotDisseminateFormat' :
-            $text = "The metadata format '{$value}' given by {$argument} is not supported by this repository.";
-            break;
-
-        case 'exclusiveArgument' :
-            $text = 'The usage of resumptionToken as an argument allows no other arguments.';
-            $code = 'badArgument';
-            break;
-
-        case 'idDoesNotExist' :
-            $text = "The value '{$value}' of the identifier does not exist in this repository.";
-            if (!is_valid_uri($value)) {
-                $code = 'badArgument';
-                $text .= ' Invalidated URI has been detected.';
-            }
-            break;
-
-        case 'missingArgument' :
-            $text = "The required argument '{$argument}' is missing in the request.";
-            $code = 'badArgument';
-            break;
-
-        case 'noRecordsMatch' :
-            $text = 'The combination of the given values results in an empty list.';
-            break;
-
-        case 'noMetadataFormats' :
-            $text = 'There are no metadata formats available for the specified item.';
-            break;
-
-        case 'noVerb' :
-            $text = 'The request does not provide any verb.';
-            $code = 'badVerb';
-            break;
-
-        case 'noSetHierarchy' :
-            $text = 'This repository does not support sets.';
-            break;
-
-        case 'sameArgument' :
-            $text = 'Do not use the same argument more than once.';
-            $code = 'badArgument';
-            break;
-
-        case 'sameVerb' :
-            $text = 'Do not use verb more than once.';
-            $code = 'badVerb';
-            break;
-
-        case 'notImp' :
-            $text = 'Not yet implemented.';
-            $code = 'debug';
-            break;
-
-        default:
-            $text = "Unknown error: code: '{$code}', argument: '{$argument}', value: '{$value}'";
-            $code = 'badArgument';
-    }
-    return $code."|".$text;
-}
 
 /**
  * A wraper of DOMDocument for data provider

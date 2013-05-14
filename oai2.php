@@ -8,62 +8,15 @@
  * @see http://www.openarchives.org/OAI/2.0/openarchivesprotocol.htm
  * 
  * It needs other files:
- * - oaidp-config.php : Configuration of provider
  * - oaidp-util.php : Utility functions
  * - xml_creater.php : XML generating functions
  *
- * \todo <b>Remember:</b> to define your own classess for generating metadata records.
- * In common cases, you have to implement your own code to act fully and correctly.
- * For generic usage, you can try the ANDS_Response_XML defined in xml_creater.php.
  */
 
-/**
- * Supported attributes associate to verbs.
- */
-
-if (in_array($_SERVER['REQUEST_METHOD'],array('GET','POST'))) {
-    $args = $_REQUEST;
-} else {
-    $errors[] = oai_error('badRequestMethod', $_SERVER['REQUEST_METHOD']);
-}
+define('MY_URI', 'dev2.moodle.ufsc.br');
 
 require_once('oaidp-util.php');
-
-// Always using htmlentities() function to encodes the HTML entities submitted by others.
-// No one can be trusted.
-foreach ($args as $key => $val) {
-    $checking = htmlspecialchars(stripslashes($val));
-    if (!is_valid_attrb($checking)) {
-        $errors[] = oai_error('badArgument', $checking);
-    } else {$args[$key] = $checking; }
-}
-if (!empty($errors)) {
-    oai_exit();
-}
-
-$attribs = array ('from', 'identifier', 'metadataPrefix', 'set', 'resumptionToken', 'until');
-foreach($attribs as $val) {
-    unset($$val);
-}
-
-require_once('oaidp-config.php');
-require_once('config/metadataformats.php');
-require_once('config/sets.php');
-require_once('config/database.php');
-
-// For generic usage or just trying:
-// require_once('xml_creater.php');
-// In common cases, you have to implement your own code to act fully and correctly.
-require_once('ands_tpa.php');
-
-// Default, there is no compression supported
-$compress = FALSE;
-if (isset($compression) && is_array($compression)) {
-    if (in_array('gzip', $compression) && ini_get('output_buffering')) {
-        $compress = TRUE;
-    }
-}
-
+require_once('xml_creater.php');
 require_once('oai2server.php');
 
 /**
@@ -94,6 +47,73 @@ $identifyResponse["deletedRecord"] = 'no'; // How your repository handles deleti
                                            //                maintained. It MAY reveal a deleted status for records.
 $identifyResponse["granularity"] = 'YYYY-MM-DDThh:mm:ssZ';
 
-$repositoryIdentifier = 'dev2.moodle.ufsc.br.';
+$oai2 = new OAI2Server($_REQUEST, $identifyResponse,
+    array(
+        'ListMetadataFormats' =>
+        function($identifier = '') {
+            // throws new OAI2Exception('idDoesNotExist', '', $identifier) 
+            return
+                array('rif' => array('metadataPrefix'=>'rif',
+                                     'schema'=>'http://services.ands.org.au/sandbox/orca/schemata/registryObjects.xsd',
+                                     'metadataNamespace'=>'http://ands.org.au/standards/rif-cs/registryObjects/',
+                               ),
+                      'oai_dc' => array('metadataPrefix'=>'oai_dc',
+                                        'schema'=>'http://www.openarchives.org/OAI/2.0/oai_dc.xsd',
+                                        'metadataNamespace'=>'http://www.openarchives.org/OAI/2.0/oai_dc/',
+                                        'record_prefix'=>'dc',
+                                        'record_namespace' => 'http://purl.org/dc/elements/1.1/'));
+        },
 
-$oai2 = new OAI2Server($args, $repositoryIdentifier, $identifyResponse);
+        'ListSets' =>
+        function($resumptionToken = '') {
+            return
+                array (
+                    array('setSpec'=>'class:collection', 'setName'=>'Collections'),
+                    array('setSpec'=>'math', 'setName'=>'Mathematics') ,
+                    array('setSpec'=>'phys', 'setName'=>'Physics'),
+                    array('setSpec'=>'phdthesis', 'setName'=>'PHD Thesis',
+                          'setDescription'=>
+                              '<oai_dc:dc xmlns:oai_dc="http://www.openarchives.org/OAI/2.0/oai_dc/" '.
+                              ' xmlns:dc="http://purl.org/dc/elements/1.1/" '.
+                              ' xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" '.
+                              ' xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/oai_dc/ '.
+                              ' http://www.openarchives.org/OAI/2.0/oai_dc.xsd"> '.
+                              ' <dc:description>This set contains metadata describing '.
+                              ' electronic music recordings made during the 1950ies</dc:description> '.
+                              ' </oai_dc:dc>'));
+        },
+
+        'ListRecords' =>
+        function($metadataPrefix, $from = '', $until = '', $set = '', $count = false, $deliveredRecords = 0, $maxItems = 0) {
+            // throws new OAI2Exception('noRecordsMatch')
+            // throws new OAI2Exception('noSetHierarchy')
+            if ($count) {
+                return 10;
+            }
+            return array();
+        },
+
+        'GetRecord' =>
+        function($identifier, $metadataPrefix) {
+            // throws new OAI2Exception('idDoesNotExist', '', $identifier) if record not found
+
+            return array('identifier' => 'dev.testing.pmh',
+                         'datestamp' => date('Y-m-d-H:s'),
+                         'set' => 'class:activity',
+                         'metadata' => array(
+                             'container_name' => 'oai_dc:dc',
+                             'container_attributes' => array(
+                                 'xmlns:oai_dc' => "http://www.openarchives.org/OAI/2.0/oai_dc/",
+                                 'xmlns:dc' => "http://purl.org/dc/elements/1.1/",
+                                 'xmlns:xsi' => "http://www.w3.org/2001/XMLSchema-instance",
+                                 'xsi:schemaLocation' =>
+                                 'http://www.openarchives.org/OAI/2.0/oai_dc/ http://www.openarchives.org/OAI/2.0/oai_dc.xsd'
+                             ),
+                             'fields' => array(
+                                 'dc:title' => 'Testing records',
+                                 'dc:author' => 'Neis'
+                             )
+                         ));
+        },
+    )
+);
