@@ -1,18 +1,5 @@
 <?php
-/**
- * OAI Data Provider command processor
- *
- * OAI Data Provider is not designed for human to retrieve data.
- *
- * This is an implementation of OAI Data Provider version 2.0.
- * @see http://www.openarchives.org/OAI/2.0/openarchivesprotocol.htm
- * 
- * It needs other files:
- * - oaidp-util.php : Utility functions
- *
- */
 
-require_once('oaidp-util.php');
 require_once('oai2server.php');
 
 /**

@@ -27,6 +27,7 @@ class OAI2XMLResponse {
     function display() {
         $this->doc->formatOutput = true;
         $this->doc->preserveWhiteSpace = false;
+        header('Content-Type: text/xml');
         echo $this->doc->saveXML();
     }
 

@@ -12,7 +12,6 @@ class OAI2Exception extends Exception {
                 'text' => "The value '{$value}' of attribute '{$argument}' on element 'request' is not valid with respect to its type, 'UTCdatetimeType'.",
                 'code' => 'badArgument',
             ),
-          
             'badResumptionToken' => array(
                 'text' => "The resumptionToken '{$value}' does not exist or has already expired.",
             ),
@@ -32,12 +31,6 @@ class OAI2Exception extends Exception {
             ),
             'idDoesNotExist' => array(
                 'text' => "The value '{$value}' of the identifier does not exist in this repository.",
-                /*
-                if (!is_valid_uri($value)) {
-                    'code' = 'badArgument',
-                    'text' .= ' Invalidated URI has been detected.',
-                }
-                */
             ),
             'missingArgument' => array(
                 'text' => "The required argument '{$argument}' is missing in the request.",
