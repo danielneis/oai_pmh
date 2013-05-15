@@ -16,8 +16,10 @@ class OAI2Server {
 
     function __construct($uri, $args, $identifyResponse, $callbacks) {
 
+        $this->uri = $uri;
+
         if (!isset($args['verb']) || empty($args['verb'])) {
-            $this->errors[] = new OAI2Exception('noVerb');
+            $this->errors[] = new OAI2Exception('badVerb');
         } else {
             $verbs = array('Identify', 'ListMetadataFormats', 'ListSets', 'ListIdentifiers', 'ListRecords', 'GetRecord');
             if (in_array($args['verb'], $verbs)) {
@@ -27,8 +29,6 @@ class OAI2Server {
                 unset($args['verb']);
 
                 $this->args = $args;
-
-                $this->uri = $uri;
 
                 $this->identifyResponse = $identifyResponse;
 

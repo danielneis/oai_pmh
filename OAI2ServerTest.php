@@ -274,6 +274,7 @@ class OAI2ServerTest extends PHPUnit_Framework_TestCase {
                 </metadata>
                 </record>
                 </GetRecord>';
+
         $f = $this->xml->createDocumentFragment();
         $f->appendXML($xml);
         $this->xml->documentElement->appendChild($f);
@@ -300,6 +301,39 @@ class OAI2ServerTest extends PHPUnit_Framework_TestCase {
     }
 
     function testIllegalVerb() {
+        $xml = '<request>test.oai_pmh</request>
+          <error code="badVerb">Illegal OAI verb</error>';
+
+        $f = $this->xml->createDocumentFragment();
+        $f->appendXML($xml);
+        $this->xml->documentElement->appendChild($f);
+
+        $return = true;
+        $uri = $this->uri;
+
         $args = array('verb' => 'IllegalVerb');
+
+        $response = require('oai2.php');
+
+        $this->assertEqualXMLStructure($this->xml->firstChild, $response->firstChild);
+    }
+
+    function testNoVerb() {
+
+        $xml = '<request>test.oai_pmh</request>
+          <error code="badVerb">Illegal OAI verb</error>';
+
+        $f = $this->xml->createDocumentFragment();
+        $f->appendXML($xml);
+        $this->xml->documentElement->appendChild($f);
+
+        $return = true;
+        $uri = $this->uri;
+
+        $args = array();
+
+        $response = require('oai2.php');
+
+        $this->assertEqualXMLStructure($this->xml->firstChild, $response->firstChild);
     }
 }

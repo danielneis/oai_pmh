@@ -21,7 +21,9 @@ class OAI2XMLResponse {
             $request->setAttribute($key,$value);
         }
 
-        $this->verbNode = $this->addChild($this->doc->documentElement,$this->verb);
+        if (!empty($this->verb)) {
+            $this->verbNode = $this->addChild($this->doc->documentElement,$this->verb);
+        }
     }
 
     /**
@@ -57,25 +59,29 @@ class OAI2XMLResponse {
      *
      * \param $identifier Type: string. The identifier string for node \<identifier\>.
      * \param $timestamp Type: timestamp. Timestapme in UTC format for node \<datastamp\>.
-     * \param $ands_class Type: mix. Can be an array or just a string. Content of \<setSpec\>.
+     * \param $setSpec Type: mix. Can be an array or just a string. Content of \<setSpec\>.
      * \param $add_to_node Type: DOMElement. Default value is null.
-     * In normal cases, $add_to_node is the \<record\> node created previously. When it is null, the newly created header node is attatched to $this->verbNode.
+     * In normal cases, $add_to_node is the \<record\> node created previously.
+     * When it is null, the newly created header node is attatched to $this->verbNode.
      * Otherwise it will be attatched to the desired node defined in $add_to_node.
      */
-    function createHeader($identifier,$timestamp,$ands_class, $add_to_node=null) {
+    function createHeader($identifier, $timestamp, $setSpec, $add_to_node=null) {
+
         if(is_null($add_to_node)) {
             $header_node = $this->addToVerbNode("header");
         } else {
             $header_node = $this->addChild($add_to_node,"header");
         }
-        $this->addChild($header_node,"identifier",$identifier);
-        $this->addChild($header_node,"datestamp",$timestamp);
-        if (is_array($ands_class)) {
-            foreach ($ands_class as $setspec) {
-                $this->addChild($header_node,"setSpec",$setspec);
+
+        $this->addChild($header_node, "identifier", $identifier);
+        $this->addChild($header_node, "datestamp", $timestamp);
+
+        if (is_array($setSpec)) {
+            foreach ($setSpec as $set) {
+                $this->addChild($header_node,"setSpec",$set);
             }
         } else {
-            $this->addChild($header_node,"setSpec",$ands_class);
+            $this->addChild($header_node,"setSpec",$setSpec);
         }
         return $header_node;
     }

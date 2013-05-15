@@ -8,19 +8,15 @@ class OAI2Exception extends Exception {
             'badArgument' => array(
                 'text' => "Attribute '{$argument}' is not allowed to appear in element 'request'.",
             ),
+            'badResumptionToken' => array(
+                'text' => "The resumptionToken '{$value}' does not exist or has already expired.",
+            ),
             'badGranularity' => array(
                 'text' => "The value '{$value}' of attribute '{$argument}' on element 'request' is not valid with respect to its type, 'UTCdatetimeType'.",
                 'code' => 'badArgument',
             ),
-            'badResumptionToken' => array(
-                'text' => "The resumptionToken '{$value}' does not exist or has already expired.",
-            ),
-            'badRequestMethod' => array(
-                'text' => "The request method '{$argument}' is unknown.",
-                'code' => 'badVerb',
-            ),
             'badVerb' => array(
-                'text' => "The value '{$argument}' of attribute 'verb' on element 'request' is not valid with respect to its type, 'verbType'",
+                'text' => "Illegal OAI verb",
             ),
             'cannotDisseminateFormat' => array(
                 'text' => "The metadata format '{$value}' given by {$argument} is not supported by this repository.",
@@ -41,10 +37,6 @@ class OAI2Exception extends Exception {
             ),
             'noMetadataFormats' => array(
                 'text' => 'There are no metadata formats available for the specified item.',
-            ),
-            'noVerb' => array(
-                'text' => 'The request does not provide any verb.',
-                'code' => 'badVerb',
             ),
             'noSetHierarchy' => array(
                 'text' => 'This repository does not support sets.',
