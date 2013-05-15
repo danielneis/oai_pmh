@@ -2,61 +2,33 @@
 
 class OAI2Exception extends Exception {
 
-    function __construct($code = 0, $argument = '', $value = '') {
+    function __construct($code) {
 
         $this->errorTable = array(
             'badArgument' => array(
-                'text' => "Attribute '{$argument}' is not allowed to appear in element 'request'.",
+                'text' => "The request includes illegal arguments, is missing required arguments, includes a repeated argument, or values for arguments have an illegal syntax.",
             ),
             'badResumptionToken' => array(
-                'text' => "The resumptionToken '{$value}' does not exist or has already expired.",
-            ),
-            'badGranularity' => array(
-                'text' => "The value '{$value}' of attribute '{$argument}' on element 'request' is not valid with respect to its type, 'UTCdatetimeType'.",
-                'code' => 'badArgument',
+                'text' => "The value of the resumptionToken argument is invalid or expired",
             ),
             'badVerb' => array(
-                'text' => "Illegal OAI verb",
+                'text' => "Value of the verb argument is not a legal OAI-PMH verb, the verb argument is missing, or the verb argument is repeated.",
             ),
             'cannotDisseminateFormat' => array(
-                'text' => "The metadata format '{$value}' given by {$argument} is not supported by this repository.",
-            ),
-            'exclusiveArgument' => array(
-                'text' => 'The usage of resumptionToken as an argument allows no other arguments.',
-                'code' => 'badArgument',
+                'text' => "The metadata format identified by the value given for the metadataPrefix argument is not supported by the item or by the repository.",
             ),
             'idDoesNotExist' => array(
-                'text' => "The value '{$value}' of the identifier does not exist in this repository.",
-            ),
-            'missingArgument' => array(
-                'text' => "The required argument '{$argument}' is missing in the request.",
-                'code' => 'badArgument',
+                'text' => "The value of the identifier argument is unknown or illegal in this repository.",
             ),
             'noRecordsMatch' => array(
-                'text' => 'The combination of the given values results in an empty list.',
+                'text' => 'The combination of the values of the from, until, set and metadataPrefix arguments results in an empty list.',
             ),
             'noMetadataFormats' => array(
                 'text' => 'There are no metadata formats available for the specified item.',
             ),
             'noSetHierarchy' => array(
-                'text' => 'This repository does not support sets.',
+                'text' => 'The repository does not support sets.',
             ),
-            'sameArgument' => array(
-                'text' => 'Do not use the same argument more than once.',
-                'code' => 'badArgument',
-            ),
-            'sameVerb' => array(
-                'text' => 'Do not use verb more than once.',
-                'code' => 'badVerb',
-            ),
-            'notImp' => array(
-                'text' => 'Not yet implemented.',
-                'code' => 'debug',
-            ),
-            ''=> array(
-                'text' => "Unknown error: code: '{'code'}', argument: '{$argument}', value: '{$value}'",
-                'code' => 'badArgument',
-            )
         );
         parent::__construct($this->errorTable[$code]['text']);
         $this->code = $code;

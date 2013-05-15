@@ -42,7 +42,7 @@ class OAI2Server {
                 call_user_func(array($this, $this->verb));
 
             } else {
-                $this->errors[] = new OAI2Exception('badVerb', $args['verb']);
+                $this->errors[] = new OAI2Exception('badVerb');
             }
         }
 
@@ -66,7 +66,7 @@ class OAI2Server {
 
         if (count($this->args) > 0) {
             foreach($this->args as $key => $val) {
-                $this->errors[] = new OAI2Exception('badArgument', $key, $val);
+                $this->errors[] = new OAI2Exception('badArgument');
             }
         } else {
             foreach($this->identifyResponse as $key => $val) {
@@ -79,7 +79,7 @@ class OAI2Server {
 
         foreach ($this->args as $argument => $value) {
             if ($argument != 'identifier') {
-                $this->errors[] = new OAI2Exception('badArgument', $argument, $value);
+                $this->errors[] = new OAI2Exception('badArgument');
             }
         }
         if (isset($this->args['identifier'])) {
@@ -109,7 +109,7 @@ class OAI2Server {
 
         if (isset($this->args['resumptionToken'])) {
             if (count($this->args) > 1) {
-                $this->errors[] = new OAI2Exception('exclusiveArgument');
+                $this->errors[] = new OAI2Exception('badArgument');
             } else {
                 if ((int)$val+$this->token_valid < time()) {
                     $this->errors[] = new OAI2Exception('badResumptionToken');
@@ -146,15 +146,15 @@ class OAI2Server {
     public function GetRecord() {
 
         if (!isset($this->args['metadataPrefix'])) {
-            $this->errors[] = new OAI2Exception('missingArgument', 'metadataPrefix');
+            $this->errors[] = new OAI2Exception('badArgument');
         } else {
             $metadataFormats = call_user_func($this->listMetadataFormatsCallback);
             if (!isset($metadataFormats[$this->args['metadataPrefix']])) {
-                $this->errors[] = new OAI2Exception('cannotDisseminateFormat', 'metadataPrefix', $this->args['metadataPrefix']);
+                $this->errors[] = new OAI2Exception('cannotDisseminateFormat');
             }
         }
         if (!isset($this->args['identifier'])) {
-            $this->errors[] = new OAI2Exception('missingArgument', 'identifier');
+            $this->errors[] = new OAI2Exception('badArgument');
         }
 
         if (empty($this->errors)) {
@@ -179,7 +179,7 @@ class OAI2Server {
                         $this->add_metadata($cur_record, $record);
                     }
                 } else {
-                    $this->errors[] = new OAI2Exception('idDoesNotExist', 'identifier', $identifier);
+                    $this->errors[] = new OAI2Exception('idDoesNotExist');
                 }
             } catch (OAI2Exception $e) {
                 $this->errors[] = $e;
@@ -202,39 +202,39 @@ class OAI2Server {
 
         if (isset($this->args['resumptionToken'])) {
             if (count($this->args) > 1) {
-                $this->errors[] = new OAI2Exception('exclusiveArgument');
+                $this->errors[] = new OAI2Exception('badArgument');
             } else {
                 if ((int)$val+$this->token_valid < time()) {
                     $this->errors[] = new OAI2Exception('badResumptionToken');
                 } else {
                     if (!file_exists($this->token_prefix.$this->args['resumptionToken'])) {
-                        $this->errors[] = new OAI2Exception('badResumptionToken', '', $this->args['resumptionToken']);
+                        $this->errors[] = new OAI2Exception('badResumptionToken');
                     } else {
                         if ($readings = $this->readResumptionToken($this->token_prefix.$this->args['resumptionToken'])) {
                             list($deliveredRecords, $metadataPrefix, $from, $until, $set) = $readings;
                         } else {
-                            $this->errors[] = new OAI2Exception('badResumptionToken', '', $this->args['resumptionToken']);
+                            $this->errors[] = new OAI2Exception('badResumptionToken');
                         }
                     }
                 }
             }
         } else {
             if (!isset($this->args['metadataPrefix'])) {
-                $this->errors[] = new OAI2Exception('missingArgument', 'metadataPrefix');
+                $this->errors[] = new OAI2Exception('badArgument');
             } else {
                 $metadataFormats = call_user_func($this->listMetadataFormatsCallback);
                 if (!isset($metadataFormats[$this->args['metadataPrefix']])) {
-                    $this->errors[] = new OAI2Exception('cannotDisseminateFormat', 'metadataPrefix', $this->args['metadataPrefix']);
+                    $this->errors[] = new OAI2Exception('cannotDisseminateFormat');
                 }
             }
             if (isset($this->args['from'])) {
                 if(!$this->checkDateFormat($this->args['from'])) {
-                    $this->errors[] = new OAI2Exception('badGranularity', 'from', $this->args['from']);
+                    $this->errors[] = new OAI2Exception('badArgument');
                 }
             }
             if (isset($this->args['until'])) {
                 if(!$this->checkDateFormat($this->args['until'])) {
-                    $this->errors[] = new OAI2Exception('badGranularity', 'until', $this->args['until']);
+                    $this->errors[] = new OAI2Exception('badArgument');
                 }
             }
         }

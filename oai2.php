@@ -60,7 +60,7 @@ $oai2 = new OAI2Server($uri, $args, $identifyResponse,
         'ListMetadataFormats' =>
         function($identifier = '') {
             if (!empty($identifier) && $identifier != 'a.b.c') {
-                throw new OAI2Exception('idDoesNotExist', '', $identifier);
+                throw new OAI2Exception('idDoesNotExist');
             }
             return
                 array('rif' => array('metadataPrefix'=>'rif',
@@ -95,10 +95,14 @@ $oai2 = new OAI2Server($uri, $args, $identifyResponse,
 
         'ListRecords' =>
         function($metadataPrefix, $from = '', $until = '', $set = '', $count = false, $deliveredRecords = 0, $maxItems = 0) use ($example_record) {
-            // throws new OAI2Exception('noRecordsMatch')
-            // throws new OAI2Exception('noSetHierarchy')
             if ($count) {
                 return 1;
+            }
+            if ($set != '') {
+                throw new OAI2Exception('noSetHierarchy');
+            }
+            if ($metadataPrefix != 'oai_dc') {
+                throw new OAI2Exception('noRecordsMatch');
             }
             return array($example_record);
         },
@@ -106,7 +110,7 @@ $oai2 = new OAI2Server($uri, $args, $identifyResponse,
         'GetRecord' =>
         function($identifier, $metadataPrefix) use ($example_record) {
             if ($identifier != 'a.b.c') {
-                throw new OAI2Exception('idDoesNotExist', '', $identifier);
+                throw new OAI2Exception('idDoesNotExist');
             }
             return $example_record;
         },
