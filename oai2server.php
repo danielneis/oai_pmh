@@ -46,8 +46,11 @@ class OAI2Server {
             }
         }
 
+    }
+
+    public function response() {
         if (empty($this->errors)) {
-            $this->response->display();
+            return $this->response->doc;
         } else {
             $errorResponse = new OAI2XMLResponse($this->uri, $this->verb, $this->args);
             $oai_node = $errorResponse->doc->documentElement;
@@ -55,7 +58,7 @@ class OAI2Server {
                 $node = $errorResponse->addChild($oai_node,"error",$e->getMessage());
                 $node->setAttribute("code",$e->getOAI2Code());
             }
-            $errorResponse->display();
+            return $errorResponse->doc;
         }
     }
 
@@ -79,9 +82,14 @@ class OAI2Server {
                 $this->errors[] = new OAI2Exception('badArgument', $argument, $value);
             }
         }
+        if (isset($this->args['identifier'])) {
+            $identifier = $this->args['identifier'];
+        } else {
+            $identifier = '';
+        }
         if (empty($this->errors)) {
             try {
-                if ($formats = call_user_func($this->listMetadataFormatsCallback, $this->args['identifier'])) {
+                if ($formats = call_user_func($this->listMetadataFormatsCallback, $identifier)) {
                     foreach($formats as $key => $val) {
                         $cmf = $this->response->addToVerbNode("metadataFormat");
                         $this->response->addChild($cmf,'metadataPrefix',$key);
@@ -111,7 +119,7 @@ class OAI2Server {
         } else {
             $resumptionToken = null;
         }
-        if (!empty($this->errors)) {
+        if (empty($this->errors)) {
             if ($sets = call_user_func($this->listSetsCallback, $resumptionToken)) {
 
                 foreach($sets as $set) {
@@ -231,7 +239,7 @@ class OAI2Server {
             }
         }
 
-        if (!empty($this->errors)) {
+        if (empty($this->errors)) {
             try {
 
                 $records_count = call_user_func($this->listRecordsCallback, $metadataPrefix, $from, $until, $set, true);
@@ -248,8 +256,8 @@ class OAI2Server {
                                         (($this->identifyResponse['deletedRecord'] == 'transient') ||
                                          ($this->identifyResponse['deletedRecord'] == 'persistent')));
 
-                    if($this->args['verb'] == 'ListRecords') {
-                        $cur_record = $this->response->createToVerNode('record');
+                    if($this->verb == 'ListRecords') {
+                        $cur_record = $this->response->addToVerbNode('record');
                         $cur_header = $this->response->createHeader($identifier, $datestamp,$setspec,$cur_record);
                         if (!$status_deleted) {
                             $this->add_metadata($cur_record, $record);

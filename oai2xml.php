@@ -24,13 +24,6 @@ class OAI2XMLResponse {
         $this->verbNode = $this->addChild($this->doc->documentElement,$this->verb);
     }
 
-    function display() {
-        $this->doc->formatOutput = true;
-        $this->doc->preserveWhiteSpace = false;
-        header('Content-Type: text/xml');
-        echo $this->doc->saveXML();
-    }
-
     /**
      * Add a child node to a parent node on a XML Doc: a worker function.
      *

@@ -15,8 +15,8 @@ require_once('oai2server.php');
  *
  */
 $identifyResponse = array();
-$identifyResponse["repositoryName"] = 'Moodle Neis';
-$identifyResponse["baseURL"] = 'http://'.$_SERVER['SERVER_NAME'].$_SERVER['SCRIPT_NAME'];
+$identifyResponse["repositoryName"] = 'OAI2 PMH Test';
+$identifyResponse["baseURL"] = 'http://198.199.108.242/~neis/oai_pmh/oai2.php';
 $identifyResponse["protocolVersion"] = '2.0';
 $identifyResponse['adminEmail'] = 'danielneis@gmail.com';
 $identifyResponse["earliestDatestamp"] = '2013-01-01T12:00:00Z';
@@ -30,7 +30,7 @@ $identifyResponse["deletedRecord"] = 'no'; // How your repository handles deleti
                                            //                maintained. It MAY reveal a deleted status for records.
 $identifyResponse["granularity"] = 'YYYY-MM-DDThh:mm:ssZ';
 
-$example_record = array('identifier' => 'dev.testing.pmh',
+$example_record = array('identifier' => 'a.b.c',
                         'datestamp' => date('Y-m-d-H:s'),
                         'set' => 'class:activity',
                         'metadata' => array(
@@ -48,11 +48,18 @@ $example_record = array('identifier' => 'dev.testing.pmh',
                             )
                        ));
 
-$oai2 = new OAI2Server('neis.moodle.ufsc.br', $_GET, $identifyResponse,
+/* unit tests ;) */
+if (!isset($args)) {
+    $args = $_GET;
+}
+if (!isset($uri)) {
+    $uri = 'test.oai_pmh';
+}
+$oai2 = new OAI2Server($uri, $args, $identifyResponse,
     array(
         'ListMetadataFormats' =>
         function($identifier = '') {
-            if ($identifier == 'a.b.c') {
+            if (!empty($identifier) && $identifier != 'a.b.c') {
                 throw new OAI2Exception('idDoesNotExist', '', $identifier);
             }
             return
@@ -87,8 +94,7 @@ $oai2 = new OAI2Server('neis.moodle.ufsc.br', $_GET, $identifyResponse,
         },
 
         'ListRecords' =>
-        function($metadataPrefix, $from = '', $until = '', $set = '', $count = false, $deliveredRecords = 0, $maxItems = 0) {
-            global $example_record;
+        function($metadataPrefix, $from = '', $until = '', $set = '', $count = false, $deliveredRecords = 0, $maxItems = 0) use ($example_record) {
             // throws new OAI2Exception('noRecordsMatch')
             // throws new OAI2Exception('noSetHierarchy')
             if ($count) {
@@ -98,12 +104,21 @@ $oai2 = new OAI2Server('neis.moodle.ufsc.br', $_GET, $identifyResponse,
         },
 
         'GetRecord' =>
-        function($identifier, $metadataPrefix) {
-            global $example_record;
-            if ($identifier == 'a.b.c') {
+        function($identifier, $metadataPrefix) use ($example_record) {
+            if ($identifier != 'a.b.c') {
                 throw new OAI2Exception('idDoesNotExist', '', $identifier);
             }
             return $example_record;
         },
     )
 );
+
+$response = $oai2->response();
+if (isset($return)) {
+    return $response;
+} else {
+    $response->formatOutput = true;
+    $response->preserveWhiteSpace = false;
+    header('Content-Type: text/xml');
+    echo $response->saveXML();
+}
