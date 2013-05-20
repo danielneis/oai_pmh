@@ -188,7 +188,7 @@ class OAI2Server {
     }
 
     public function ListIdentifiers() {
-        return $this->ListRecords();
+        $this->ListRecords();
     }
 
     public function ListRecords() {
